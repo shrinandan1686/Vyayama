@@ -32,7 +32,7 @@ connectDB();
 
 // Routes
 app.get('/', (req, res) => {
-    res.send('Gym App Backend is running');
+    res.send('Vyayama Backend is running');
 });
 
 app.get('/health', (req, res) => {

@@ -80,7 +80,7 @@ const ChatScreen = () => {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>AI Health Coach</Text>
+                <Text style={styles.headerTitle}>Vyayama AI Coach</Text>
             </View>
 
             <FlatList
