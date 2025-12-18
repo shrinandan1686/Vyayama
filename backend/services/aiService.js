@@ -22,12 +22,16 @@ const assessUser = async (userProfile) => {
     }
 };
 
-const chatWithAI = async (message, context, userId) => {
+const chatWithAI = async (message, context, userId, imageBase64 = null, sessionId = null) => {
     try {
+        const finalSessionId = sessionId
+            ? (sessionId.startsWith(`user_${userId}_`) ? sessionId : `user_${userId}_${sessionId}`)
+            : `user_${userId}_default`;
         const response = await axios.post(`${AI_SERVICE_URL}/chat`, {
             message,
             context,
-            session_id: userId
+            session_id: finalSessionId,
+            image_base64: imageBase64
         });
         return response.data;
     } catch (error) {
@@ -36,8 +40,49 @@ const chatWithAI = async (message, context, userId) => {
     }
 };
 
+const getChatHistory = async (userId, sessionId = null) => {
+    try {
+        const finalSessionId = sessionId
+            ? (sessionId.startsWith(`user_${userId}_`) ? sessionId : `user_${userId}_${sessionId}`)
+            : `user_${userId}_default`;
+
+        const response = await axios.get(`${AI_SERVICE_URL}/chat/history/${finalSessionId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching chat history:', error.message);
+        throw error;
+    }
+};
+
+const getChatSessions = async (userId) => {
+    try {
+        const response = await axios.get(`${AI_SERVICE_URL}/chat/sessions/${userId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching chat sessions:', error.message);
+        throw error;
+    }
+};
+
+const resetChatSession = async (userId, sessionId = null) => {
+    try {
+        const finalSessionId = sessionId
+            ? (sessionId.startsWith(`user_${userId}_`) ? sessionId : `user_${userId}_${sessionId}`)
+            : `user_${userId}_default`;
+
+        const response = await axios.delete(`${AI_SERVICE_URL}/chat/session/${finalSessionId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error resetting chat session:', error.message);
+        throw error;
+    }
+};
+
 module.exports = {
     generateWorkoutPlan,
     assessUser,
-    chatWithAI
+    chatWithAI,
+    getChatHistory,
+    getChatSessions,
+    resetChatSession
 };

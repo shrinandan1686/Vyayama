@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -9,56 +9,186 @@ import {
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
-    SafeAreaView
+    SafeAreaView,
+    Image,
+    Keyboard,
+    Animated,
+    StatusBar,
+    Modal,
+    Pressable,
+    ScrollView
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SIZES, FONTS } from '../constants/theme';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import API_URL from '../config';
+import * as ImagePicker from 'expo-image-picker';
+import Markdown from 'react-native-markdown-display';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 const ChatScreen = () => {
-    const [messages, setMessages] = useState([
-        { id: '1', text: "Hello! I'm your AI Fitness Coach. Ask me anything about your workout or health.", sender: 'ai' }
-    ]);
+    const [messages, setMessages] = useState([]);
     const [inputText, setInputText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+    const [activeSessionId, setActiveSessionId] = useState(null);
+    const [sessions, setSessions] = useState([]);
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
     const { userToken } = useContext(AuthContext);
+    const flatListRef = useRef();
+    const bottomTabBarHeight = useBottomTabBarHeight();
+
+    useEffect(() => {
+        fetchChatHistory();
+    }, []);
+
+    const fetchChatHistory = async (sessionId = null) => {
+        setIsLoadingHistory(true);
+        try {
+            const targetSession = sessionId || activeSessionId || 'default';
+            const response = await axios.get(`${API_URL}/chat/history`, {
+                params: { sessionId: targetSession },
+                headers: { 'x-auth-token': userToken }
+            });
+            if (response.data.history && response.data.history.length > 0) {
+                // Ensure messages are unique by ID
+                const uniqueHistory = [];
+                const seenIds = new Set();
+
+                response.data.history.forEach(msg => {
+                    if (!seenIds.has(msg.id)) {
+                        uniqueHistory.push(msg);
+                        seenIds.add(msg.id);
+                    }
+                });
+                setMessages(uniqueHistory);
+            } else {
+                setMessages([
+                    { id: '1', text: "Hello! I'm your Vyayama AI Coach. How can I help you reach your fitness goals today?", sender: 'ai' }
+                ]);
+            }
+        } catch (error) {
+            console.log('History Fetch Error:', error);
+            setMessages([
+                { id: '1', text: "Hello! I'm your AI Fitness Coach. Ask me anything about your workout or health.", sender: 'ai' }
+            ]);
+        } finally {
+            setIsLoadingHistory(false);
+            // Wait for list to render before scrolling
+            setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 500);
+        }
+    };
+    async function fetchSessions() {
+        try {
+            const response = await axios.get(`${API_URL}/chat/sessions`, {
+                headers: { 'x-auth-token': userToken }
+            });
+            setSessions(response.data.sessions || []);
+        } catch (error) {
+            console.log('Fetch Sessions Error:', error);
+        }
+    }
+
+    const loadSession = (sessionId) => {
+        setActiveSessionId(sessionId);
+        setMessages([]); // Clear current while loading
+        fetchChatHistory(sessionId);
+        setShowHistoryModal(false);
+    };
+
+    const resetChat = async () => {
+        try {
+            setIsLoadingHistory(true);
+            if (activeSessionId) {
+                await axios.delete(`${API_URL}/chat/session`, {
+                    params: { sessionId: activeSessionId },
+                    headers: { 'x-auth-token': userToken }
+                });
+            }
+            setActiveSessionId(null);
+            setMessages([
+                { id: `wel_${Date.now()}`, text: "Hello! I'm your Vyayama AI Coach. How can I help you reach your fitness goals today?", sender: 'ai' }
+            ]);
+        } catch (error) {
+            console.log('Reset Session Error:', error);
+        } finally {
+            setIsLoadingHistory(false);
+        }
+    };
+
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            quality: 0.5,
+            base64: true,
+        });
+
+        if (!result.canceled) {
+            setSelectedImage(result.assets[0]);
+        }
+    };
 
     const sendMessage = async () => {
-        if (!inputText.trim()) return;
+        if (!inputText.trim() && !selectedImage) return;
 
-        const userMsg = { id: Date.now().toString(), text: inputText, sender: 'user' };
+        let sessionId = activeSessionId;
+        const isFirstMessage = !sessionId;
+
+        if (!sessionId) {
+            sessionId = `chat_${Date.now()}`;
+        }
+
+        const userMsg = {
+            id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            text: inputText,
+            sender: 'user',
+            image: selectedImage?.uri
+        };
+
         setMessages(prev => [...prev, userMsg]);
         setInputText('');
+        const imageToUpload = selectedImage?.base64;
+        setSelectedImage(null);
         setIsTyping(true);
 
-        try {
-            // Note: In real app, include token in headers if auth is enabled
-            // axios.defaults.headers.common['x-auth-token'] = userToken; but backend auth middleware uses 'x-auth-token' header
+        Keyboard.dismiss();
+        setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
+        try {
             const response = await axios.post(`${API_URL}/chat`, {
-                message: userMsg.text
+                message: userMsg.text,
+                imageBase64: imageToUpload,
+                sessionId: sessionId
             }, {
                 headers: { 'x-auth-token': userToken }
             });
 
+            if (isFirstMessage) {
+                setActiveSessionId(sessionId);
+            }
+
             const aiMsg = {
-                id: (Date.now() + 1).toString(),
+                id: `ai_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 text: response.data.response || "I couldn't get a response at this time.",
                 sender: 'ai'
             };
             setMessages(prev => [...prev, aiMsg]);
         } catch (error) {
             console.log('Chat Error:', error);
-            const errorMsg = {
-                id: (Date.now() + 1).toString(),
+            setIsTyping(false);
+            setMessages(prev => [...prev, {
+                id: `err_${Date.now()}`,
                 text: "Sorry, I'm having trouble connecting to my brain right now. Please try again.",
                 sender: 'ai'
-            };
-            setMessages(prev => [...prev, errorMsg]);
+            }]);
         } finally {
             setIsTyping(false);
+            setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
         }
     };
 
@@ -66,138 +196,509 @@ const ChatScreen = () => {
         const isUser = item.sender === 'user';
         return (
             <View style={[
-                styles.messageBubble,
-                isUser ? styles.userBubble : styles.aiBubble
+                styles.messageContainer,
+                isUser ? { alignItems: 'flex-end' } : { alignItems: 'flex-start' }
             ]}>
-                <Text style={[
-                    styles.messageText,
-                    isUser ? styles.userText : styles.aiText
-                ]}>{item.text}</Text>
+                <View style={[
+                    styles.messageWrapper,
+                    isUser ? { flexDirection: 'row-reverse' } : { flexDirection: 'row' }
+                ]}>
+                    {!isUser && (
+                        <View style={styles.aiAvatar}>
+                            <MaterialCommunityIcons name="robot" size={18} color={COLORS.primary} />
+                        </View>
+                    )}
+
+                    <View style={[
+                        styles.messageBubble,
+                        isUser ? styles.userBubble : styles.aiBubble
+                    ]}>
+                        {isUser ? (
+                            <LinearGradient
+                                colors={[COLORS.primary, COLORS.primaryGradientEnd]}
+                                style={styles.gradientBubble}
+                            >
+                                {item.image && <Image source={{ uri: item.image }} style={styles.messageImage} />}
+                                <Text style={styles.userText}>{item.text}</Text>
+                            </LinearGradient>
+                        ) : (
+                            <Markdown style={markdownStyles}>
+                                {item.text}
+                            </Markdown>
+                        )}
+                    </View>
+                </View>
             </View>
         );
     };
 
+    if (isLoadingHistory) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+                <Text style={{ marginTop: 20, color: COLORS.textSecondary }}>Refreshing Coach Memory...</Text>
+            </View>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container}>
+            <StatusBar barStyle="light-content" />
+
+            {/* Custom Header */}
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Vyayama AI Coach</Text>
+                <TouchableOpacity style={styles.headerIconButton} onPress={resetChat}>
+                    <Ionicons name="add" size={28} color={COLORS.textSecondary} />
+                </TouchableOpacity>
+
+                <View style={styles.headerInfo}>
+                    <Text style={styles.headerTitle}>Vyayama AI</Text>
+                    <View style={styles.headerBadge}>
+                        <View style={styles.onlineDot} />
+                        <Text style={styles.onlineText}>Online</Text>
+                    </View>
+                </View>
+
+                <TouchableOpacity
+                    style={styles.headerIconButton}
+                    onPress={() => {
+                        fetchSessions();
+                        setShowHistoryModal(true);
+                    }}
+                >
+                    <Ionicons name="time-outline" size={24} color={COLORS.textSecondary} />
+                </TouchableOpacity>
             </View>
 
             <FlatList
+                ref={flatListRef}
                 data={messages}
                 renderItem={renderItem}
                 keyExtractor={item => item.id}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
+                onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
             />
 
             {isTyping && (
                 <View style={styles.typingIndicator}>
-                    <ActivityIndicator size="small" color={COLORS.primary} />
-                    <Text style={{ marginLeft: 10, color: COLORS.textSecondary }}>AI is typing...</Text>
+                    <View style={styles.aiAvatarSmall}>
+                        <ActivityIndicator size="small" color={COLORS.primary} />
+                    </View>
+                    <Text style={styles.typingText}>Vyayama is thinking...</Text>
                 </View>
             )}
 
+            {/* History Modal */}
+            <Modal
+                visible={showHistoryModal}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setShowHistoryModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <BlurView intensity={20} style={StyleSheet.absoluteFill} tint="dark" />
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Chat History</Text>
+                            <TouchableOpacity onPress={() => setShowHistoryModal(false)}>
+                                <Ionicons name="close" size={24} color={COLORS.white} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView style={styles.sessionList}>
+                            {sessions.length === 0 ? (
+                                <Text style={styles.emptyText}>No previous chats found.</Text>
+                            ) : (
+                                sessions.map((session) => (
+                                    <TouchableOpacity
+                                        key={session.session_id}
+                                        style={[
+                                            styles.sessionItem,
+                                            activeSessionId === session.session_id && styles.activeSessionItem
+                                        ]}
+                                        onPress={() => loadSession(session.session_id)}
+                                    >
+                                        <View style={styles.sessionIcon}>
+                                            <Ionicons name="chatbubble-ellipses-outline" size={20} color={COLORS.primary} />
+                                        </View>
+                                        <View style={styles.sessionInfo}>
+                                            <Text style={styles.sessionTitle} numberOfLines={1}>
+                                                {session.title || "New Conversation"}
+                                            </Text>
+                                            <Text style={styles.sessionDate}>
+                                                {session.updated_at ? new Date(session.updated_at).toLocaleDateString() : 'Just now'}
+                                            </Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                ))
+                            )}
+                        </ScrollView>
+
+                        <TouchableOpacity
+                            style={styles.newChatModalButton}
+                            onPress={() => {
+                                resetChat();
+                                setShowHistoryModal(false);
+                            }}
+                        >
+                            <LinearGradient
+                                colors={[COLORS.primary, COLORS.primaryGradientEnd]}
+                                style={styles.modalButtonGradient}
+                            >
+                                <Ionicons name="add" size={22} color={COLORS.white} />
+                                <Text style={styles.newChatModalText}>Start New Chat</Text>
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
-                keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+                style={{ width: '100%' }}
             >
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Ask about workouts, diet..."
-                        placeholderTextColor={COLORS.textSecondary}
-                        value={inputText}
-                        onChangeText={setInputText}
-                        onSubmitEditing={sendMessage}
-                    />
-                    <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-                        <Ionicons name="send" size={20} color={COLORS.white} />
-                    </TouchableOpacity>
-                </View>
+                {selectedImage && (
+                    <View style={styles.imagePreviewContainer}>
+                        <View style={styles.imagePreviewWrapper}>
+                            <Image source={{ uri: selectedImage.uri }} style={styles.imagePreview} />
+                            <TouchableOpacity
+                                style={styles.removeImageButton}
+                                onPress={() => setSelectedImage(null)}
+                            >
+                                <Ionicons name="close-circle" size={20} color={COLORS.error} />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+
+                <BlurView
+                    intensity={90}
+                    tint="dark"
+                    style={[
+                        styles.inputWrapper,
+                        { paddingBottom: Platform.OS === 'ios' ? bottomTabBarHeight : bottomTabBarHeight + 10 }
+                    ]}
+                >
+                    <View style={styles.inputContainer}>
+                        <TouchableOpacity style={styles.attachButton} onPress={pickImage}>
+                            <Ionicons name="attach" size={26} color={COLORS.textSecondary} />
+                        </TouchableOpacity>
+
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Message Vyayama AI..."
+                            placeholderTextColor={COLORS.textMuted}
+                            value={inputText}
+                            onChangeText={setInputText}
+                            multiline
+                            maxHeight={120}
+                        />
+
+                        <TouchableOpacity
+                            style={[
+                                styles.sendButton,
+                                (!inputText.trim() && !selectedImage) && { opacity: 0.5, backgroundColor: COLORS.surfaceLight }
+                            ]}
+                            onPress={sendMessage}
+                            disabled={!inputText.trim() && !selectedImage}
+                        >
+                            <Ionicons name="arrow-up" size={22} color={COLORS.white} />
+                        </TouchableOpacity>
+                    </View>
+                </BlurView>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
 };
 
+const markdownStyles = StyleSheet.create({
+    body: {
+        color: '#E0E0E0',
+        fontSize: 15,
+        lineHeight: 22,
+    },
+    bullet_list: {
+        marginVertical: 5,
+    },
+    list_item: {
+        marginVertical: 2,
+    },
+    strong: {
+        fontWeight: 'bold',
+        color: COLORS.secondary,
+    },
+    code_inline: {
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 4,
+        borderRadius: 4,
+        color: COLORS.secondary,
+    }
+});
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
+        backgroundColor: '#121212',
     },
     header: {
-        paddingVertical: 20,
-        paddingHorizontal: 20,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 15,
+        paddingTop: Platform.OS === 'android' ? 10 : 0,
+        paddingBottom: 15,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.surface,
-        alignItems: 'center'
+        borderBottomColor: 'rgba(255,255,255,0.08)',
+    },
+    headerInfo: {
+        alignItems: 'center',
     },
     headerTitle: {
-        ...FONTS.h2,
+        fontSize: 18,
+        fontWeight: '800',
         color: COLORS.white,
+        letterSpacing: 0.5,
+    },
+    headerBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 2,
+    },
+    onlineDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: COLORS.success,
+        marginRight: 5,
+    },
+    onlineText: {
+        color: COLORS.textSecondary,
+        fontSize: 11,
+        fontWeight: '600',
+    },
+    headerIconButton: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     listContent: {
-        paddingHorizontal: 20,
-        paddingBottom: 20,
-        paddingTop: 10
+        paddingHorizontal: 15,
+        paddingBottom: 30,
+        paddingTop: 20
+    },
+    messageContainer: {
+        marginVertical: 12,
+        width: '100%',
+    },
+    messageWrapper: {
+        maxWidth: '85%',
+        alignItems: 'flex-start',
+    },
+    aiAvatar: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: 'rgba(46, 106, 255, 0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 10,
+        marginTop: 2,
+        borderWidth: 1,
+        borderColor: 'rgba(46, 106, 255, 0.2)',
     },
     messageBubble: {
-        maxWidth: '80%',
-        padding: 12,
-        borderRadius: 12,
-        marginVertical: 5,
+        borderRadius: 20,
+        overflow: 'hidden',
     },
     userBubble: {
+        borderBottomRightRadius: 4,
         alignSelf: 'flex-end',
-        backgroundColor: COLORS.primary,
-        borderBottomRightRadius: 2,
     },
     aiBubble: {
-        alignSelf: 'flex-start',
-        backgroundColor: COLORS.surface,
-        borderBottomLeftRadius: 2,
+        backgroundColor: '#262626',
+        borderBottomLeftRadius: 4,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        flex: 1,
     },
-    messageText: {
-        ...FONTS.body3,
+    gradientBubble: {
+        paddingHorizontal: 16,
+        paddingVertical: 14,
     },
     userText: {
         color: COLORS.white,
+        fontSize: 15,
+        lineHeight: 22,
     },
-    aiText: {
-        color: COLORS.text,
+    messageImage: {
+        width: 200,
+        height: 150,
+        borderRadius: 12,
+        marginBottom: 10,
+    },
+    inputWrapper: {
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.08)',
     },
     inputContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
-        padding: 15,
-        borderTopWidth: 1,
-        borderTopColor: COLORS.surface,
-        backgroundColor: COLORS.background,
-        marginBottom: 80, // Add margin to clear the floating tab bar
+        alignItems: 'flex-end',
+        paddingHorizontal: 12,
+        paddingVertical: 15,
+    },
+    attachButton: {
+        padding: 10,
+        marginBottom: 2,
     },
     input: {
         flex: 1,
-        backgroundColor: COLORS.surface,
-        color: COLORS.white,
-        borderRadius: 25,
-        paddingHorizontal: 15,
+        backgroundColor: '#262626',
+        borderRadius: 24,
+        paddingHorizontal: 18,
         paddingVertical: 10,
-        marginRight: 10,
-        ...FONTS.body3,
+        color: COLORS.white,
+        fontSize: 15,
+        marginHorizontal: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
     },
     sendButton: {
         backgroundColor: COLORS.primary,
-        width: 45,
-        height: 45,
-        borderRadius: 22.5,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
+        marginBottom: 2,
     },
     typingIndicator: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginLeft: 20,
-        marginBottom: 10
+        paddingHorizontal: 20,
+        paddingBottom: 15,
+    },
+    aiAvatarSmall: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: 'rgba(46, 106, 255, 0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 10,
+    },
+    typingText: {
+        color: COLORS.textSecondary,
+        fontSize: 13,
+        fontWeight: '500',
+    },
+    imagePreviewContainer: {
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        backgroundColor: 'transparent',
+    },
+    imagePreviewWrapper: {
+        width: 60,
+        height: 60,
+    },
+    imagePreview: {
+        width: 60,
+        height: 60,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    removeImageButton: {
+        position: 'absolute',
+        top: -6,
+        right: -6,
+        backgroundColor: '#121212',
+        borderRadius: 10,
+    },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: '#1c1c1e',
+        borderTopLeftRadius: 25,
+        borderTopRightRadius: 25,
+        height: '75%',
+        padding: 24,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 25,
+    },
+    modalTitle: {
+        color: COLORS.white,
+        fontSize: 22,
+        fontWeight: '700',
+    },
+    sessionList: {
+        flex: 1,
+    },
+    sessionItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        backgroundColor: '#2c2c2e',
+        borderRadius: 16,
+        marginBottom: 12,
+    },
+    activeSessionItem: {
+        borderColor: COLORS.primary,
+        borderWidth: 1,
+        backgroundColor: 'rgba(46, 106, 255, 0.1)',
+    },
+    sessionIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 15,
+    },
+    sessionInfo: {
+        flex: 1,
+    },
+    sessionTitle: {
+        color: COLORS.white,
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    sessionDate: {
+        color: COLORS.textSecondary,
+        fontSize: 12,
+        marginTop: 4,
+    },
+    emptyText: {
+        color: COLORS.textSecondary,
+        textAlign: 'center',
+        marginTop: 60,
+        fontSize: 16,
+    },
+    newChatModalButton: {
+        marginTop: 20,
+        borderRadius: 16,
+        overflow: 'hidden',
+    },
+    modalButtonGradient: {
+        flexDirection: 'row',
+        padding: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    newChatModalText: {
+        color: COLORS.white,
+        fontSize: 16,
+        fontWeight: '700',
+        marginLeft: 10,
     }
 });
 

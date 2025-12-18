@@ -1,0 +1,8 @@
+Testing get_session_messages():
+Error calling get_session_messages(): Session not found
+
+Testing get_chat_history():
+Error calling get_chat_history(): Session not found
+
+Testing delete_session():
+delete_session exists: True

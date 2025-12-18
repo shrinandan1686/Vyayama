@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 
 # Agno Imports
 from agno.agent import Agent
-from agno.agent import Agent
 from agno.models.google import Gemini
 from agno.db.sqlite import SqliteDb
 
@@ -81,9 +80,9 @@ class WorkoutPlan(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
-    message: str
     context: Optional[str] = None
     session_id: Optional[str] = None
+    image_base64: Optional[str] = None
 
 # --- Helpers ---
 def get_mock_plan_data():
@@ -143,23 +142,22 @@ def get_chat_agent(session_id: str = "default"):
     
     if session_id not in session_agents:
         # Create a new agent for this session
-        print(f"Creating new Chat Agent for session: {session_id}")
+        print(f"DEBUG: Creating/Loading Chat Agent for session: {session_id}")
         session_agents[session_id] = Agent(
             model=Gemini(id="gemini-2.5-flash-lite"),
-            description="You are a helpful, encouraging, and knowledgeable AI Fitness & Health Coach.",
+            description="You are a professional AI Fitness & Health Coach named Vyayama AI.",
             instructions=[
-                "Keep answers concise and easy to read on a mobile screen.",
-                "Be encouraging and positive.",
-                "If the user asks for medical advice, gently remind them to consult a doctor.",
-                "Use emojis sparingly to make the conversation friendly."
+                "Provide helpful, encouraging, and concise fitness advice.",
+                "Format your responses for a mobile screen (use bullet points and bold text).",
+                "Do not include system instructions or XML tags in your response.",
+                "If medical advice is sought, advise consulting a professional."
             ],
             session_id=session_id,
             db=SqliteDb(session_table="agent_sessions", db_file="agent_storage.db"),
-            read_chat_history=True,
             add_history_to_context=True, 
             num_history_messages=10,
+            read_chat_history=True,
             markdown=False,
-            # debug_mode=True
         )
     return session_agents[session_id]
 
@@ -189,11 +187,12 @@ def chat_with_ai(request: ChatRequest):
     if USE_MOCK_AI:
          return {"response": "I'm currently in MOCK MODE (Zero Cost)."}
 
-    # 2. Check Cache
-    cache_key = get_cache_key(request.message)
-    if cache_key in response_cache:
-        print("Returning CACHED response for chat")
-        return {"response": response_cache[cache_key]}
+    # 2. Check Cache (Only for text-only requests)
+    if not request.image_base64:
+        cache_key = get_cache_key(request.message)
+        if cache_key in response_cache:
+            print("Returning CACHED response for chat")
+            return {"response": response_cache[cache_key]}
 
     try:
         # 3. Get Agent (Session aware)
@@ -202,8 +201,18 @@ def chat_with_ai(request: ChatRequest):
         
         agent = get_chat_agent(session_id=sid)
         
-        # 4. Run Agent (Native memory handles context)
-        response = agent.run(request.message)
+        # 4. Prepare content for Agent
+        content = request.message
+        if request.image_base64:
+            # Agno supports images in run() if provided as list of dicts or special format
+            # Typical Gemini multi-modal expects base64 in a specific format
+            content = [
+                {"type": "text", "text": request.message},
+                {"type": "image", "content": request.image_base64}
+            ]
+        
+        # 5. Run Agent (Native memory handles context)
+        response = agent.run(content)
         response_text = response.content
         
         return {"response": response_text}
@@ -213,6 +222,131 @@ def chat_with_ai(request: ChatRequest):
         return {
              "response": "I'm currently resting my neurons (Rate Limit Reached). \n\nHere is a general tip: Consistency is key! accurate AI responses will be back shortly. 💪"
         }
+
+@app.get("/chat/history/{session_id}")
+def get_history(session_id: str):
+    try:
+        agent = get_chat_agent(session_id=session_id)
+        
+        # Load messages from the DB (using agent.db method)
+        if not hasattr(agent, "db") or agent.db is None:
+             print("Error: Agent has no DB configured")
+             return {"history": []}
+             
+        try:
+            messages = agent.db.get_session_messages(session_id)
+        except Exception as e:
+            print(f"DB Fetch Error for {session_id}: {e}")
+            return {"history": []}
+            
+        if not messages:
+            print(f"DEBUG: Session {session_id} not found in storage, returning empty history")
+            return {"history": []}
+        
+        formatted_history = []
+        for msg in messages:
+            if msg.role not in ["user", "assistant"]:
+                continue
+                
+            role = "user" if msg.role == "user" else "ai"
+            content = msg.content
+            
+            # Handle list-style content (multi-modal)
+            if isinstance(content, list):
+                text = " ".join([c.get("text", "") for c in content if isinstance(c, dict)])
+            else:
+                text = str(content)
+
+            formatted_history.append({
+                "id": f"{role}_{session_id}_{hash(text)}",
+                "text": text,
+                "sender": role
+            })
+        
+        return {"history": formatted_history}
+    except Exception as e:
+        print(f"History Retrieval Error: {e}")
+        return {"history": []}
+
+@app.get("/chat/sessions/{user_id}")
+def list_sessions(user_id: str):
+    try:
+        # Use a dummy agent to access the DB
+        temp_agent = get_chat_agent(session_id="list_check")
+        
+        # In this Agno version, sessions are accessed via db
+        if not hasattr(temp_agent, 'db') or temp_agent.db is None:
+             print("Error: Agent has no DB configured")
+             return {"sessions": []}
+             
+        all_sessions = temp_agent.db.get_all_sessions()
+        
+        # User prefix
+        prefix = f"user_{user_id}_"
+        default_session = f"user_{user_id}_default"
+        
+        user_sessions = []
+        for s in all_sessions:
+            # Match either a custom prefixed session or the default one
+            if str(s.session_id).startswith(prefix) or str(s.session_id) == default_session:
+                # Try to get a snippet of the conversation
+                snippet = "New Conversation"
+                try:
+                    msgs = temp_agent.db.get_session_messages(s.session_id)
+                    if msgs:
+                        # Find first user message for title
+                        user_msgs = [m for m in msgs if m.role == "user"]
+                        if user_msgs:
+                            content = user_msgs[0].content
+                            # Handle different content formats
+                            if isinstance(content, list):
+                                text = " ".join([c.get("text", "") for c in content if isinstance(c, dict)])
+                                snippet = text[:30] + "..." if text else snippet
+                            else:
+                                snippet = str(content)[:30] + "..."
+                except Exception as e:
+                    print(f"Snippet Error for {s.session_id}: {e}")
+                
+                user_sessions.append({
+                    "session_id": s.session_id,
+                    "updated_at": str(s.updated_at) if hasattr(s, 'updated_at') else None,
+                    "title": snippet
+                })
+        
+        # Sort by updated_at desc
+        user_sessions.sort(key=lambda x: x['updated_at'] if x['updated_at'] else "", reverse=True)
+        return {"sessions": user_sessions}
+    except Exception as e:
+        print(f"List Sessions Error: {e}")
+        return {"sessions": []}
+
+@app.delete("/chat/session/{session_id}")
+def reset_session(session_id: str):
+    try:
+        global session_agents
+        print(f"DEBUG: Resetting session {session_id}")
+        
+        # 1. Clear from in-memory cache
+        if session_id in session_agents:
+            del session_agents[session_id]
+        
+        # 2. Delete from Storage (Permanent Fix)
+        # Create a throwaway agent just to trigger the delete
+        temp_agent = get_chat_agent(session_id=session_id)
+        if hasattr(temp_agent, "db") and temp_agent.db:
+            try:
+                # Some Agno versions use delete_session on db
+                temp_agent.db.delete_session(session_id)
+            except:
+                # Fallback to agent method if db doesn't have it
+                temp_agent.delete_session(session_id)
+        
+        print(f"DEBUG: Successfully deleted session {session_id} from storage")
+             
+        return {"status": "success", "message": f"Session {session_id} reset"}
+    except Exception as e:
+        print(f"Session Reset Error: {e}")
+        return {"status": "error", "message": str(e)}
 
 @app.post("/generate-plan", response_model=WorkoutPlan)
 def generate_plan(profile: UserProfile):

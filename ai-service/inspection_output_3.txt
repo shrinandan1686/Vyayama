@@ -1,0 +1,22 @@
+Running agent...
+ERROR    Error from Gemini API: 400 INVALID_ARGUMENT. {'error':      
+         {'code': 400, 'message': 'API key not valid. Please pass a  
+         valid API key.', 'status': 'INVALID_ARGUMENT', 'details':   
+         [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo',      
+         'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com',    
+         'metadata': {'service':                                     
+         'generativelanguage.googleapis.com'}}, {'@type':            
+         'type.googleapis.com/google.rpc.LocalizedMessage', 'locale':
+         'en-US', 'message': 'API key not valid. Please pass a valid 
+         API key.'}]}}                                               
+ERROR    Model provider error after 1 attempts: <Response [400 Bad   
+         Request]>                                                   
+ERROR    All 1 attempts failed. Final error: <Response [400 Bad      
+         Request]>                                                   
+Run error (expected if no key): <Response [400 Bad Request]>
+
+Force saving session...
+Upsert error: 'Agent' object has no attribute 'storage'
+
+Testing get_session_messages():
+Error calling get_session_messages(): Session not found
