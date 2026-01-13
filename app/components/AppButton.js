@@ -1,15 +1,16 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS, SIZES } from '../constants/theme';
 
-const AppButton = ({
+const AppButton = memo(({
     title,
     onPress,
     loading = false,
     variant = 'primary', // primary, secondary, text
-    style
+    style,
+    disabled
 }) => {
 
     if (variant === 'primary') {
@@ -17,7 +18,7 @@ const AppButton = ({
             <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={onPress}
-                disabled={loading}
+                disabled={loading || disabled}
                 style={[styles.container, style]}
             >
                 <LinearGradient
@@ -41,7 +42,7 @@ const AppButton = ({
             <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={onPress}
-                disabled={loading}
+                disabled={loading || disabled}
                 style={[styles.container, styles.secondaryContainer, style]}
             >
                 {loading ? (
@@ -57,13 +58,15 @@ const AppButton = ({
         <TouchableOpacity
             activeOpacity={0.6}
             onPress={onPress}
-            disabled={loading}
+            disabled={loading || disabled}
             style={[styles.textContainer, style]}
         >
             <Text style={[styles.textLink, { color: COLORS.textSecondary }]}>{title}</Text>
         </TouchableOpacity>
     );
-};
+});
+
+AppButton.displayName = 'AppButton';
 
 const styles = StyleSheet.create({
     container: {
@@ -71,7 +74,7 @@ const styles = StyleSheet.create({
         height: 50,
         borderRadius: SIZES.radius,
         overflow: 'hidden',
-        marginVertical: 10,
+        marginVertical: SIZES.marginSmall,
     },
     gradient: {
         flex: 1,
@@ -95,7 +98,7 @@ const styles = StyleSheet.create({
         color: COLORS.white,
     },
     textLink: {
-        fontSize: 14,
+        fontSize: SIZES.body4,
         fontWeight: '500',
     }
 });

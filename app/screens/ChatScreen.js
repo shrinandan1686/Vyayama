@@ -278,6 +278,10 @@ const ChatScreen = () => {
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={10}
+                windowSize={10}
+                initialNumToRender={15}
             />
 
             {isTyping && (
@@ -415,7 +419,7 @@ const ChatScreen = () => {
 
 const markdownStyles = StyleSheet.create({
     body: {
-        color: '#E0E0E0',
+        color: COLORS.text,
         fontSize: 15,
         lineHeight: 22,
     },
@@ -430,7 +434,7 @@ const markdownStyles = StyleSheet.create({
         color: COLORS.secondary,
     },
     code_inline: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: COLORS.borderLight,
         paddingHorizontal: 4,
         borderRadius: 4,
         color: COLORS.secondary,
@@ -440,25 +444,24 @@ const markdownStyles = StyleSheet.create({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#121212',
+        backgroundColor: COLORS.background,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 15,
-        paddingTop: Platform.OS === 'android' ? 10 : 0,
-        paddingBottom: 15,
+        paddingHorizontal: SIZES.paddingSmall,
+        paddingTop: Platform.OS === 'android' ? SIZES.marginSmall : 0,
+        paddingBottom: SIZES.paddingSmall,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.08)',
+        borderBottomColor: COLORS.borderFocus,
     },
     headerInfo: {
         alignItems: 'center',
     },
     headerTitle: {
-        fontSize: 18,
+        ...FONTS.h3,
         fontWeight: '800',
-        color: COLORS.white,
         letterSpacing: 0.5,
     },
     headerBadge: {
@@ -475,7 +478,7 @@ const styles = StyleSheet.create({
     },
     onlineText: {
         color: COLORS.textSecondary,
-        fontSize: 11,
+        fontSize: SIZES.small + 1,
         fontWeight: '600',
     },
     headerIconButton: {
@@ -504,7 +507,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(46, 106, 255, 0.1)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 10,
+        marginRight: SIZES.marginSmall,
         marginTop: 2,
         borderWidth: 1,
         borderColor: 'rgba(46, 106, 255, 0.2)',
@@ -518,9 +521,9 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-end',
     },
     aiBubble: {
-        backgroundColor: '#262626',
+        backgroundColor: COLORS.cardBackground,
         borderBottomLeftRadius: 4,
-        paddingHorizontal: 16,
+        paddingHorizontal: SIZES.paddingSmall,
         paddingVertical: 14,
         flex: 1,
     },
@@ -541,29 +544,29 @@ const styles = StyleSheet.create({
     },
     inputWrapper: {
         borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.08)',
+        borderTopColor: COLORS.borderFocus,
     },
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'flex-end',
-        paddingHorizontal: 12,
-        paddingVertical: 15,
+        paddingHorizontal: SIZES.paddingMini,
+        paddingVertical: SIZES.paddingSmall,
     },
     attachButton: {
-        padding: 10,
+        padding: SIZES.marginSmall,
         marginBottom: 2,
     },
     input: {
         flex: 1,
-        backgroundColor: '#262626',
+        backgroundColor: COLORS.cardBackground,
         borderRadius: 24,
         paddingHorizontal: 18,
-        paddingVertical: 10,
+        paddingVertical: SIZES.marginSmall,
         color: COLORS.white,
         fontSize: 15,
-        marginHorizontal: 10,
+        marginHorizontal: SIZES.marginSmall,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: COLORS.borderDark,
     },
     sendButton: {
         backgroundColor: COLORS.primary,
@@ -583,15 +586,15 @@ const styles = StyleSheet.create({
     aiAvatarSmall: {
         width: 24,
         height: 24,
-        borderRadius: 12,
+        borderRadius: SIZES.radius,
         backgroundColor: 'rgba(46, 106, 255, 0.1)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 10,
+        marginRight: SIZES.marginSmall,
     },
     typingText: {
         color: COLORS.textSecondary,
-        fontSize: 13,
+        fontSize: SIZES.caption + 1,
         fontWeight: '500',
     },
     imagePreviewContainer: {
@@ -606,37 +609,36 @@ const styles = StyleSheet.create({
     imagePreview: {
         width: 60,
         height: 60,
-        borderRadius: 10,
+        borderRadius: SIZES.marginSmall,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderColor: COLORS.borderLight,
     },
     removeImageButton: {
         position: 'absolute',
         top: -6,
         right: -6,
-        backgroundColor: '#121212',
-        borderRadius: 10,
+        backgroundColor: COLORS.background,
+        borderRadius: SIZES.marginSmall,
     },
     modalOverlay: {
         flex: 1,
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: '#1c1c1e',
-        borderTopLeftRadius: 25,
-        borderTopRightRadius: 25,
+        backgroundColor: COLORS.modalBackground,
+        borderTopLeftRadius: SIZES.marginSection,
+        borderTopRightRadius: SIZES.marginSection,
         height: '75%',
-        padding: 24,
+        padding: SIZES.padding,
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 25,
+        marginBottom: SIZES.marginSection,
     },
     modalTitle: {
-        color: COLORS.white,
-        fontSize: 22,
+        ...FONTS.h2,
         fontWeight: '700',
     },
     sessionList: {
@@ -645,10 +647,10 @@ const styles = StyleSheet.create({
     sessionItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16,
-        backgroundColor: '#2c2c2e',
-        borderRadius: 16,
-        marginBottom: 12,
+        padding: SIZES.paddingSmall,
+        backgroundColor: COLORS.surfaceLight,
+        borderRadius: SIZES.radiusLarge,
+        marginBottom: SIZES.marginVertical,
     },
     activeSessionItem: {
         borderColor: COLORS.primary,
@@ -659,33 +661,32 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: COLORS.borderDark,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 15,
+        marginRight: SIZES.paddingSmall,
     },
     sessionInfo: {
         flex: 1,
     },
     sessionTitle: {
-        color: COLORS.white,
-        fontSize: 16,
+        ...FONTS.body3,
         fontWeight: '600',
     },
     sessionDate: {
         color: COLORS.textSecondary,
-        fontSize: 12,
+        fontSize: SIZES.caption,
         marginTop: 4,
     },
     emptyText: {
         color: COLORS.textSecondary,
         textAlign: 'center',
         marginTop: 60,
-        fontSize: 16,
+        ...FONTS.body3,
     },
     newChatModalButton: {
         marginTop: 20,
-        borderRadius: 16,
+        borderRadius: SIZES.radiusLarge,
         overflow: 'hidden',
     },
     modalButtonGradient: {
@@ -695,10 +696,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     newChatModalText: {
-        color: COLORS.white,
-        fontSize: 16,
+        ...FONTS.body3,
         fontWeight: '700',
-        marginLeft: 10,
+        marginLeft: SIZES.marginSmall,
     }
 });
 

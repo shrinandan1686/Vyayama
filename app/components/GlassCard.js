@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { SIZES, COLORS } from '../constants/theme';
 
-const GlassCard = ({ children, style, intensity = 20 }) => {
+const GlassCard = memo(({ children, style, intensity = 20 }) => {
     // Android Support for BlurView is limited in Expo Go sometimes, 
     // so we use a semi-transparent gradient fallback if needed, 
     // but Expo Blur works reasonably well on modern Android versions.
@@ -30,7 +30,9 @@ const GlassCard = ({ children, style, intensity = 20 }) => {
             </View>
         </View>
     );
-};
+});
+
+GlassCard.displayName = 'GlassCard';
 
 const styles = StyleSheet.create({
     container: {

@@ -45,6 +45,7 @@ app.use('/api/exercises', require('./routes/exercises'));
 app.use('/api/workout-plans', require('./routes/workoutPlans'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/chat', require('./routes/chat'));
+app.use('/api/activity', require('./routes/activity'));
 
 // Start Server
 app.listen(PORT, () => {

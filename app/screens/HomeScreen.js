@@ -1,9 +1,9 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Image, Alert } from 'react-native';
+import React, { useContext, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Image, Alert } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 import { AuthContext } from '../context/AuthContext';
-import axios from 'axios';
-import API_URL from '../config';
+import { useWorkoutPlan } from '../hooks/useWorkoutPlan';
+import { useActivity } from '../hooks/useActivity';
 import ScreenWrapper from '../components/ScreenWrapper';
 import { COLORS, FONTS, SIZES } from '../constants/theme';
 import AppButton from '../components/AppButton';
@@ -12,36 +12,38 @@ import { StatusBar } from 'expo-status-bar';
 import GlassCard from '../components/GlassCard';
 import ChartComponent from '../components/ChartComponent';
 import { Ionicons } from '@expo/vector-icons';
+import Tag from '../components/Tag';
+import WorkoutPlanSkeleton from '../components/WorkoutPlanSkeleton';
 
 const HomeScreen = ({ navigation }) => {
     const { userToken } = useContext(AuthContext);
-    const [plan, setPlan] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    const fetchPlan = async () => {
-        try {
-            const response = await axios.get(`${API_URL}/workout-plans`, {
-                headers: { 'x-auth-token': userToken }
-            });
-            setPlan(response.data);
-        } catch (e) {
-            console.log('No plan found or error fetching plan');
-        }
-        setLoading(false);
-    };
-
+    const { plan, loading, refreshing, error, refetch } = useWorkoutPlan();
+    const { stats, weeklyData, loading: activityLoading } = useActivity();
     const isFocused = useIsFocused();
 
+    // Refetch when screen comes into focus
     useEffect(() => {
         if (isFocused) {
-            fetchPlan();
+            refetch();
         }
-    }, [isFocused]);
+    }, [isFocused, refetch]);
 
     if (loading) {
         return (
-            <ScreenWrapper style={{ justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
+            <ScreenWrapper>
+                <StatusBar style="light" />
+                <WorkoutPlanSkeleton />
+            </ScreenWrapper>
+        );
+    }
+
+    if (error) {
+        return (
+            <ScreenWrapper style={{ justifyContent: 'center', alignItems: 'center', padding: SIZES.padding }}>
+                <Text style={{ color: COLORS.error, ...FONTS.body3, marginBottom: SIZES.marginSection }}>
+                    {error}
+                </Text>
+                <AppButton title="Retry" onPress={refetch} />
             </ScreenWrapper>
         );
     }
@@ -95,9 +97,7 @@ const HomeScreen = ({ navigation }) => {
                                 <Text style={styles.dayName}>Day {day.dayNumber}</Text>
                                 <Text style={styles.subText}>45 mins • {day.exercises.length} Exercises</Text>
                             </View>
-                            <View style={styles.tag}>
-                                <Text style={styles.tagText}>{day.type}</Text>
-                            </View>
+                            <Tag label={day.type} variant="secondary" />
                         </View>
 
                         <View style={styles.divider} />
@@ -162,7 +162,18 @@ const HomeScreen = ({ navigation }) => {
 
             {renderHeader()}
 
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={refetch}
+                        tintColor={COLORS.primary}
+                        colors={[COLORS.primary]}
+                    />
+                }
+            >
 
                 {/* Weekly Activity Chart */}
                 <View style={styles.section}>
@@ -171,15 +182,15 @@ const HomeScreen = ({ navigation }) => {
                         <View style={{ padding: 20 }}>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
                                 <View>
-                                    <Text style={styles.statBig}>1,250</Text>
+                                    <Text style={styles.statBig}>{stats.totalCalories?.toLocaleString() || 0}</Text>
                                     <Text style={styles.statLabel}>Kcal Burned</Text>
                                 </View>
                                 <View>
-                                    <Text style={styles.statBig}>5</Text>
+                                    <Text style={styles.statBig}>{stats.totalWorkouts || 0}</Text>
                                     <Text style={styles.statLabel}>Workouts</Text>
                                 </View>
                             </View>
-                            <ChartComponent />
+                            <ChartComponent data={weeklyData} />
                         </View>
                     </GlassCard>
                 </View>
@@ -197,11 +208,18 @@ const HomeScreen = ({ navigation }) => {
                                 </View>
                                 <View style={{ marginLeft: 15, flex: 1 }}>
                                     <Text style={styles.challengeTitle}>30-Day Streak</Text>
-                                    <Text style={styles.challengeSub}>You are on day 12. Keep it up!</Text>
+                                    <Text style={styles.challengeSub}>
+                                        {stats.currentStreak > 0
+                                            ? `You are on day ${stats.currentStreak}. Keep it up!`
+                                            : 'Start your streak today!'}
+                                    </Text>
                                 </View>
                             </View>
                             <View style={styles.progressBarBg}>
-                                <LinearGradient colors={[COLORS.secondary, COLORS.primary]} style={{ width: '40%', height: '100%' }} />
+                                <LinearGradient
+                                    colors={[COLORS.secondary, COLORS.primary]}
+                                    style={{ width: `${Math.min((stats.currentStreak / 30) * 100, 100)}%`, height: '100%' }}
+                                />
                             </View>
                         </LinearGradient>
                     </GlassCard>
@@ -265,8 +283,8 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
         textTransform: 'uppercase',
         letterSpacing: 1,
-        fontSize: 12,
-        marginBottom: 10,
+        fontSize: SIZES.caption,
+        marginBottom: SIZES.marginSmall,
     },
     seeAll: {
         ...FONTS.body4,
@@ -277,28 +295,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: 15,
+        marginBottom: SIZES.paddingSmall,
     },
     dayName: {
         ...FONTS.h3,
         color: COLORS.white,
     },
     subText: {
-        fontSize: 12,
+        fontSize: SIZES.caption,
         color: COLORS.textSecondary,
         marginTop: 2,
-    },
-    tag: {
-        backgroundColor: 'rgba(198, 255, 0, 0.1)',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 10,
-    },
-    tagText: {
-        color: COLORS.secondary,
-        fontSize: 10,
-        fontWeight: 'bold',
-        textTransform: 'uppercase',
     },
     divider: {
         height: 1,
@@ -323,7 +329,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     exerciseMeta: {
-        fontSize: 12,
+        fontSize: SIZES.caption,
         color: COLORS.textSecondary,
     },
     statBig: {
@@ -331,7 +337,7 @@ const styles = StyleSheet.create({
         color: COLORS.white,
     },
     statLabel: {
-        fontSize: 12,
+        fontSize: SIZES.caption,
         color: COLORS.textSecondary,
     },
     challengeIcon: {
@@ -347,7 +353,7 @@ const styles = StyleSheet.create({
         color: COLORS.white,
     },
     challengeSub: {
-        fontSize: 12,
+        fontSize: SIZES.caption,
         color: COLORS.textSecondary,
     },
     progressBarBg: {

@@ -74,7 +74,7 @@ const OnboardingScreen = ({ navigation }) => {
                         />
 
                         <View style={styles.row}>
-                            <View style={{ flex: 1, marginRight: 10 }}>
+                            <View style={{ flex: 1, marginRight: SIZES.marginSmall }}>
                                 <AppInput
                                     label="Weight (kg)"
                                     value={weight}
@@ -83,7 +83,7 @@ const OnboardingScreen = ({ navigation }) => {
                                     placeholder="e.g. 70"
                                 />
                             </View>
-                            <View style={{ flex: 1, marginLeft: 10 }}>
+                            <View style={{ flex: 1, marginLeft: SIZES.marginSmall }}>
                                 <AppInput
                                     label="Height (cm)"
                                     value={height}

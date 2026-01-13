@@ -1,33 +1,46 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
-import axios from 'axios';
-import API_URL from '../config';
+import { useApi } from '../hooks/useApi';
 import ScreenWrapper from '../components/ScreenWrapper';
 import AppButton from '../components/AppButton';
 import { COLORS, FONTS, SIZES } from '../constants/theme';
 import { StatusBar } from 'expo-status-bar';
 
 const ProfileScreen = ({ navigation }) => {
-    const { userToken, logout } = useContext(AuthContext);
+    const { logout } = useContext(AuthContext);
+    const api = useApi();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState(null);
+
+    const fetchUser = async (isRefreshing = false) => {
+        try {
+            if (isRefreshing) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
+            setError(null);
+            const data = await api.getProfile();
+            setUser(data);
+        } catch (e) {
+            console.error('Error fetching profile:', e);
+            setError(e.response?.data?.message || e.message || 'Failed to load profile');
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                // Fix: Use API_URL constant instead of hardcoded localhost
-                const response = await axios.get(`${API_URL}/users/profile`, {
-                    headers: { 'x-auth-token': userToken }
-                });
-                setUser(response.data);
-            } catch (e) {
-                console.log(e);
-            }
-            setLoading(false);
-        };
-        fetchUser();
+        fetchUser(false);
     }, []);
+
+    const handleRefresh = () => {
+        fetchUser(true);
+    };
 
     if (loading) {
         return (
@@ -37,11 +50,13 @@ const ProfileScreen = ({ navigation }) => {
         );
     }
 
-    if (!user) {
+    if (error || !user) {
         return (
-            <ScreenWrapper style={{ justifyContent: 'center', alignItems: 'center' }}>
-                <Text style={{ color: COLORS.error }}>Failed to load profile</Text>
-                <AppButton title="Retry" onPress={() => setLoading(true)} style={{ width: 100, marginTop: 20 }} />
+            <ScreenWrapper style={{ justifyContent: 'center', alignItems: 'center', padding: SIZES.padding }}>
+                <Text style={{ color: COLORS.error, ...FONTS.body3, marginBottom: SIZES.marginSection, textAlign: 'center' }}>
+                    {error || 'Failed to load profile'}
+                </Text>
+                <AppButton title="Retry" onPress={() => fetchUser(false)} style={{ width: 120 }} />
             </ScreenWrapper>
         );
     }
@@ -56,7 +71,18 @@ const ProfileScreen = ({ navigation }) => {
     return (
         <ScreenWrapper>
             <StatusBar style="light" />
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        retreathing={refreshing}
+                        onRefresh={handleRefresh}
+                        tintColor={COLORS.primary}
+                        colors={[COLORS.primary]}
+                    />
+                }
+            >
 
                 <View style={styles.header}>
                     <View style={styles.avatar}>
@@ -126,7 +152,7 @@ const ProfileScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
     scrollContent: {
-        paddingBottom: 20,
+        paddingBottom: 120, // Extra padding for floating tab bar
         flexGrow: 1,
     },
     header: {
@@ -168,7 +194,7 @@ const styles = StyleSheet.create({
         ...FONTS.h4,
         color: COLORS.textSecondary,
         marginBottom: 20,
-        fontSize: 12,
+        fontSize: SIZES.caption,
         letterSpacing: 1,
     },
     statsGrid: {

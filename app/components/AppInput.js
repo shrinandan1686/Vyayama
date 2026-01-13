@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { View, TextInput, Text, StyleSheet } from 'react-native';
 import { COLORS, SIZES, FONTS } from '../constants/theme';
 
-const AppInput = ({
+const AppInput = memo(({
     placeholder,
     value,
     onChangeText,
@@ -38,7 +38,9 @@ const AppInput = ({
             {error && <Text style={styles.errorText}>{error}</Text>}
         </View>
     );
-};
+});
+
+AppInput.displayName = 'AppInput';
 
 const styles = StyleSheet.create({
     container: {
@@ -71,7 +73,7 @@ const styles = StyleSheet.create({
     },
     errorText: {
         color: COLORS.error,
-        fontSize: 12,
+        fontSize: SIZES.caption,
         marginTop: 4,
     }
 });

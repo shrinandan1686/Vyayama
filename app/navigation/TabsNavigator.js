@@ -64,7 +64,7 @@ const TabsNavigator = () => {
 
 const TabIcon = ({ focused, icon, label }) => {
     return (
-        <View style={{ alignItems: 'center', justifyContent: 'center', top: Platform.OS === 'ios' ? 10 : 0 }}>
+        <View style={{ alignItems: 'center', justifyContent: 'center' }}>
             <View style={[
                 styles.iconContainer,
                 focused && styles.iconContainerFocused
@@ -86,10 +86,12 @@ const styles = StyleSheet.create({
         bottom: 20,
         left: 20,
         right: 20,
-        height: 70,
-        borderRadius: 35,
+        height: 75,
+        borderRadius: 37.5,
         borderTopWidth: 0,
         elevation: 0,
+        paddingTop: 10,
+        paddingBottom: 8,
         ...Platform.select({
             ios: {
                 shadowColor: "#000",
@@ -99,20 +101,20 @@ const styles = StyleSheet.create({
             },
             android: {
                 elevation: 10,
-                backgroundColor: COLORS.surface, // Fallback if blur doesn't work well
+                backgroundColor: COLORS.surface,
             }
         }),
-        overflow: 'hidden', // for blur to respect border radius on android sometimes needs care, but iOS handles it.
+        overflow: 'hidden',
     },
     iconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 42,
+        height: 42,
+        borderRadius: 21,
         justifyContent: 'center',
         alignItems: 'center',
     },
     iconContainerFocused: {
-        backgroundColor: 'rgba(46, 106, 255, 0.2)', // Light primary,
+        backgroundColor: 'rgba(46, 106, 255, 0.2)',
     },
     dot: {
         width: 4,

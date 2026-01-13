@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 
 import { Ionicons } from '@expo/vector-icons';
+import Tag from '../components/Tag';
 
 const ExerciseDetailScreen = ({ route, navigation }) => {
     const { exercise, planId, dayNumber, exerciseIndex, dayExercises } = route.params;
@@ -98,12 +99,8 @@ const ExerciseDetailScreen = ({ route, navigation }) => {
                     <Text style={styles.title}>{exercise.name}</Text>
 
                     <View style={styles.tagsRow}>
-                        <View style={styles.tag}>
-                            <Text style={styles.tagText}>{exercise.category}</Text>
-                        </View>
-                        <View style={[styles.tag, { marginLeft: 10, backgroundColor: 'rgba(198, 255, 0, 0.1)' }]}>
-                            <Text style={[styles.tagText, { color: COLORS.secondary }]}>{exercise.difficulty}</Text>
-                        </View>
+                        <Tag label={exercise.category} variant="primary" />
+                        <Tag label={exercise.difficulty} variant="secondary" style={{ marginLeft: SIZES.marginSmall }} />
                     </View>
 
                     <View style={styles.infoGrid}>
@@ -252,7 +249,7 @@ const styles = StyleSheet.create({
     },
     tag: {
         backgroundColor: 'rgba(46, 106, 255, 0.2)',
-        paddingHorizontal: 12,
+        paddingHorizontal: SIZES.paddingMini,
         paddingVertical: 5,
         borderRadius: 20,
     },
@@ -274,7 +271,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     infoLabel: {
-        fontSize: 12,
+        fontSize: SIZES.caption,
         color: COLORS.textSecondary,
         marginBottom: 5,
         fontWeight: 'bold',
@@ -302,14 +299,14 @@ const styles = StyleSheet.create({
     instructionNumber: {
         width: 24,
         height: 24,
-        borderRadius: 12,
+        borderRadius: SIZES.radius,
         backgroundColor: COLORS.surfaceLight,
         textAlign: 'center',
         lineHeight: 24,
         color: COLORS.primary,
-        fontSize: 12,
+        fontSize: SIZES.caption,
         fontWeight: 'bold',
-        marginRight: 10,
+        marginRight: SIZES.marginSmall,
         marginTop: 2,
     },
     instructionText: {
@@ -347,7 +344,7 @@ const styles = StyleSheet.create({
     },
     altEquip: {
         color: COLORS.textSecondary,
-        fontSize: 12,
+        fontSize: SIZES.caption,
     },
     iconButton: {
         width: 36,

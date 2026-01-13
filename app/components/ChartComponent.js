@@ -3,27 +3,37 @@ import { View, Text, StyleSheet } from 'react-native';
 import { COLORS, FONTS, SIZES } from '../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const ChartComponent = () => {
-    // Mock Data for "Weekly Activity"
-    const data = [
-        { label: 'M', value: 0.3 },
-        { label: 'T', value: 0.5 },
-        { label: 'W', value: 0.8 },
-        { label: 'T', value: 0.4 },
-        { label: 'F', value: 0.9 },
-        { label: 'S', value: 0.6 },
-        { label: 'S', value: 0.2 },
+const ChartComponent = ({ data = [] }) => {
+    // If no data, show empty bars
+    const chartData = data.length > 0 ? data.map(d => {
+        const dayLabel = d.day?.substring(0, 1) || '-'; // First letter of day
+        const maxCalories = 500; // Max calories for normalization
+        const normalizedValue = Math.min(d.calories / maxCalories, 1); // 0-1 range
+
+        return {
+            label: dayLabel,
+            value: normalizedValue,
+            calories: d.calories || 0
+        };
+    }) : [
+        { label: 'M', value: 0, calories: 0 },
+        { label: 'T', value: 0, calories: 0 },
+        { label: 'W', value: 0, calories: 0 },
+        { label: 'T', value: 0, calories: 0 },
+        { label: 'F', value: 0, calories: 0 },
+        { label: 'S', value: 0, calories: 0 },
+        { label: 'S', value: 0, calories: 0 },
     ];
 
     return (
         <View style={styles.container}>
             <View style={styles.chartRow}>
-                {data.map((item, index) => (
+                {chartData.map((item, index) => (
                     <View key={index} style={styles.barContainer}>
                         <View style={styles.barTrack}>
                             <LinearGradient
-                                colors={[COLORS.secondary, COLORS.primary]} // Lime to Blue gradient
-                                style={[styles.barFill, { height: `${item.value * 100}%` }]}
+                                colors={[COLORS.secondary, COLORS.primary]}
+                                style={[styles.barFill, { height: item.value > 0 ? `${Math.max(item.value * 100, 10)}%` : '0%' }]}
                             />
                         </View>
                         <Text style={styles.label}>{item.label}</Text>
