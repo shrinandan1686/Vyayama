@@ -48,4 +48,29 @@ router.put('/profile', auth, async (req, res) => {
     }
 });
 
+// @route   PUT api/users/current-day
+// @desc    Update user's current workout day
+// @access  Private
+router.put('/current-day', auth, async (req, res) => {
+    try {
+        const { currentWorkoutDay } = req.body;
+
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ msg: 'User not found' });
+
+        user.currentWorkoutDay = currentWorkoutDay;
+
+        // Set plan start date on first day
+        if (currentWorkoutDay === 1 && !user.planStartDate) {
+            user.planStartDate = new Date();
+        }
+
+        await user.save();
+        res.json({ currentWorkoutDay: user.currentWorkoutDay });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
 module.exports = router;

@@ -1,21 +1,17 @@
-
-import React, { useContext, useState } from 'react';
+import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Linking, TouchableOpacity, Alert } from 'react-native';
-import { AuthContext } from '../context/AuthContext';
-import axios from 'axios';
-import API_URL from '../config';
+import { useApi } from '../hooks/useApi';
 import ScreenWrapper from '../components/ScreenWrapper';
 import AppButton from '../components/AppButton';
 import { COLORS, FONTS, SIZES } from '../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-
 import { Ionicons } from '@expo/vector-icons';
 import Tag from '../components/Tag';
 
 const ExerciseDetailScreen = ({ route, navigation }) => {
     const { exercise, planId, dayNumber, exerciseIndex, dayExercises } = route.params;
-    const { userToken } = useContext(AuthContext);
+    const api = useApi();
     const [completed, setCompleted] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showAlternatives, setShowAlternatives] = useState(false);
@@ -37,40 +33,42 @@ const ExerciseDetailScreen = ({ route, navigation }) => {
 
         setLoading(true);
         try {
-            await axios.put(`${API_URL}/workout-plans/${planId}/day/${dayNumber}/exercise/${exercise._id}`, {
+            await api.updateExerciseProgress(planId, dayNumber, exercise._id, {
                 completed: true,
-                alternativeUsed: exId !== exercise._id // Mark as alternative used if ID differs
-            }, {
-                headers: { 'x-auth-token': userToken }
+                alternativeUsed: exId !== exercise._id
             });
             setCompleted(true);
-            Alert.alert('Great Job!', 'Exercise marked as complete.');
-            navigation.goBack();
+
+            // If there's a next exercise, navigate to it after a short delay
+            if (dayExercises && exerciseIndex < dayExercises.length - 1) {
+                setTimeout(() => {
+                    const nextIndex = exerciseIndex + 1;
+                    const nextEx = dayExercises[nextIndex];
+                    navigation.replace('ExerciseDetail', {
+                        exercise: {
+                            ...nextEx.exercise,
+                            sets: nextEx.sets,
+                            reps: nextEx.reps,
+                            _id: nextEx.exercise._id
+                        },
+                        planId,
+                        dayNumber,
+                        exerciseIndex: nextIndex,
+                        dayExercises
+                    });
+                }, 1000);
+            } else {
+                // Last exercise - show completion message
+                Alert.alert('Workout Complete!', 'Great job finishing all exercises!', [
+                    { text: 'OK', onPress: () => navigation.goBack() }
+                ]);
+            }
         } catch (e) {
             console.log(e);
             Alert.alert('Error', 'Failed to mark complete');
         }
         setLoading(false);
     };
-
-    const renderAlternative = (alt, index) => (
-        <View key={index} style={styles.altCard}>
-            <View>
-                <Text style={styles.altName}>{alt.name}</Text>
-                <Text style={styles.altEquip}>{alt.equipment}</Text>
-            </View>
-            <View style={{ flexDirection: 'row' }}>
-                {alt.youtubeUrl && (
-                    <TouchableOpacity onPress={() => Linking.openURL(alt.youtubeUrl)} style={styles.iconButton}>
-                        <Text style={{ fontSize: 18 }}>🎥</Text>
-                    </TouchableOpacity>
-                )}
-                <TouchableOpacity onPress={() => markComplete(alt._id)} style={[styles.iconButton, { marginLeft: 10, backgroundColor: COLORS.primary }]}>
-                    <Text style={{ color: COLORS.white, fontWeight: 'bold' }}>DO</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
 
     return (
         <ScreenWrapper>
@@ -121,7 +119,24 @@ const ExerciseDetailScreen = ({ route, navigation }) => {
                     {showAlternatives && exercise.alternatives && exercise.alternatives.length > 0 && (
                         <View style={styles.alternativesSection}>
                             <Text style={styles.sectionTitleAlt}>ALTERNATIVES</Text>
-                            {exercise.alternatives.map((alt, i) => renderAlternative(alt, i))}
+                            {exercise.alternatives.map((alt, i) => (
+                                <View key={i} style={styles.altCard}>
+                                    <View>
+                                        <Text style={styles.altName}>{alt.name}</Text>
+                                        <Text style={styles.altEquip}>{alt.equipment}</Text>
+                                    </View>
+                                    <View style={{ flexDirection: 'row', display: 'flex' }}>
+                                        {alt.youtubeUrl && (
+                                            <TouchableOpacity onPress={() => Linking.openURL(alt.youtubeUrl)} style={styles.iconButton}>
+                                                <Text style={{ fontSize: 18 }}>🎥</Text>
+                                            </TouchableOpacity>
+                                        )}
+                                        <TouchableOpacity onPress={() => markComplete(alt._id)} style={[styles.iconButton, { marginLeft: 10, backgroundColor: COLORS.primary }]}>
+                                            <Text style={{ color: COLORS.white, fontWeight: 'bold' }}>DO</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            ))}
                         </View>
                     )}
 
@@ -166,7 +181,7 @@ const ExerciseDetailScreen = ({ route, navigation }) => {
                                     dayExercises
                                 });
                             }}
-                            variant="primary" // Or a different style
+                            variant="primary"
                             style={{ marginTop: 15, backgroundColor: COLORS.secondary }}
                         />
                     )}
@@ -234,9 +249,7 @@ const styles = StyleSheet.create({
         color: COLORS.white,
     },
     content: {
-        paddingHorizontal: 0, // Reset since wrapper handles outer padding, actually I'll need to remove wrapper padding or adjust here. 
-        // My ScreenWrapper adds paddingHorizontal: 20. 
-        // So I don't need extra padding here.
+        paddingHorizontal: 0,
     },
     title: {
         ...FONTS.h1,
@@ -369,4 +382,3 @@ const styles = StyleSheet.create({
 });
 
 export default ExerciseDetailScreen;
-

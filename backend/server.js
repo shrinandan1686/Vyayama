@@ -48,6 +48,10 @@ app.use('/api/chat', require('./routes/chat'));
 app.use('/api/activity', require('./routes/activity'));
 
 // Start Server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
+
+module.exports = app;

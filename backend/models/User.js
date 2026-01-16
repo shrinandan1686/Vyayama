@@ -21,6 +21,8 @@ const UserSchema = new mongoose.Schema({
         daysPerWeek: Number,
         injuries: [String]
     },
+    currentWorkoutDay: { type: Number, default: 1 },
+    planStartDate: { type: Date },
     createdAt: { type: Date, default: Date.now }
 });
 

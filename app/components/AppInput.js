@@ -1,4 +1,3 @@
-
 import React, { useState, memo } from 'react';
 import { View, TextInput, Text, StyleSheet } from 'react-native';
 import { COLORS, SIZES, FONTS } from '../constants/theme';

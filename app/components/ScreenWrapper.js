@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { View, StyleSheet, SafeAreaView, StatusBar, Platform } from 'react-native';
 import { COLORS } from '../constants/theme';

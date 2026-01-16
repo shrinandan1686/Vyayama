@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const WorkoutPlan = require('../models/WorkoutPlan');
+const Activity = require('../models/Activity');
 const auth = require('../middleware/authMiddleware');
 
 // @route   GET api/workout-plans
@@ -21,7 +22,7 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
-const { generateWorkoutPlan } = require('../services/aiService');
+const { generateWorkoutPlan, generateNextDay } = require('../services/aiService');
 const User = require('../models/User');
 
 // ...
@@ -167,10 +168,176 @@ router.put('/:id/day/:dayNumber/exercise/:exerciseId', auth, async (req, res) =>
         if (alternativeUsed !== undefined) exercise.alternativeUsed = alternativeUsed;
 
         await plan.save();
+
+        // --- AUTOMATIC ACTIVITY LOGGING ---
+        if (completed) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Find or create activity for today
+            let activity = await Activity.findOne({
+                userId: req.user.id,
+                workoutDate: {
+                    $gte: today,
+                    $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
+                }
+            });
+
+            if (!activity) {
+                activity = new Activity({
+                    userId: req.user.id,
+                    planId: plan._id,
+                    dayNumber: day.dayNumber,
+                    workoutDate: new Date(),
+                    caloriesBurned: 0,
+                    duration: 0,
+                    exercises: []
+                });
+            }
+
+            // Check if this exercise is already in the activity
+            const exerciseIndex = activity.exercises.findIndex(e => e.exerciseId.toString() === req.params.exerciseId);
+
+            if (exerciseIndex === -1) {
+                // Add to activity exercises
+                const exDetails = day.exercises.find(e => e.exercise.toString() === req.params.exerciseId || e._id.toString() === req.params.exerciseId);
+
+                activity.exercises.push({
+                    exerciseId: req.params.exerciseId,
+                    name: exDetails?.exercise?.name || 'Exercise',
+                    sets: exDetails?.sets || 0,
+                    reps: parseInt(exDetails?.reps) || 0,
+                    completed: true
+                });
+
+                // Update totals (simplistic calculation: 50 calories per exercise)
+                activity.caloriesBurned += 50;
+                activity.duration += 10;
+            }
+
+            await activity.save();
+        }
+        // --- END ACTIVITY LOGGING ---
+
         res.json(plan);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
+    }
+});
+
+// @route   POST api/workout-plans/next-day
+// @desc    Generate and add the next day to the workout plan
+// @access  Private
+router.post('/next-day', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ msg: 'User not found' });
+
+        // Get current workout plan
+        const plan = await WorkoutPlan.findOne({ user: req.user.id }).sort({ startDate: -1 });
+        if (!plan) return res.status(404).json({ msg: 'No workout plan found' });
+
+        // Determine next day number
+        const currentDay = user.currentWorkoutDay || 1;
+        const nextDayNumber = currentDay + 1;
+
+        // Check if day already exists
+        const existingDay = plan.days.find(d => d.dayNumber === nextDayNumber);
+        if (existingDay) {
+            return res.json({ message: 'Day already exists', plan });
+        }
+
+        // Get previous workout focus for context
+        const previousDay = plan.days.find(d => d.dayNumber === currentDay);
+        const previousWorkoutFocus = previousDay ? previousDay.type : null;
+
+        // Map user profile for AI
+        const aiProfile = {
+            age: user.fitnessProfile.age || 25,
+            gender: user.fitnessProfile.gender || 'Prefer not to say',
+            weight: user.fitnessProfile.weight || 70,
+            height: user.fitnessProfile.height || 175,
+            goal: user.fitnessProfile.goal || 'General Fitness',
+            experience_level: user.fitnessProfile.experienceLevel || 'Beginner',
+            gym_comfort: user.fitnessProfile.gymComfort,
+            gym_confidence: user.fitnessProfile.gymConfidence,
+            body_type: user.fitnessProfile.bodyType,
+            focus_areas: user.fitnessProfile.focusAreas || [],
+            days_per_week: user.fitnessProfile.daysPerWeek || 3,
+            average_workout_duration: user.fitnessProfile.averageWorkoutDuration || 60,
+            equipment: user.fitnessProfile.equipment || [],
+            gym_crowd_level: user.fitnessProfile.gymCrowdLevel,
+            injuries: user.fitnessProfile.injuries || []
+        };
+
+        // Generate next day using AI
+        console.log(`Generating Day ${nextDayNumber} for user ${req.user.id}`);
+        const aiDayResponse = await generateNextDay(aiProfile, nextDayNumber, previousWorkoutFocus);
+
+        const Exercise = require('../models/Exercise');
+
+        // Helper to sync exercises (same as in POST /)
+        const syncExercise = async (exData) => {
+            let exercise = await Exercise.findOne({ name: exData.name });
+            let alternativeIds = [];
+
+            if (exData.alternatives && exData.alternatives.length > 0) {
+                for (const alt of exData.alternatives) {
+                    const altId = await syncExercise(alt);
+                    if (altId) alternativeIds.push(altId);
+                }
+            }
+
+            if (!exercise) {
+                exercise = new Exercise({
+                    name: exData.name,
+                    category: 'General',
+                    primaryMuscle: exData.primaryMuscle || 'Full Body',
+                    secondaryMuscles: exData.secondaryMuscles || [],
+                    equipment: exData.equipment || [],
+                    instructions: exData.instructions || [],
+                    youtubeUrl: exData.youtubeUrl || `https://www.youtube.com/results?search_query=${encodeURIComponent(exData.name)}`,
+                    difficulty: user.fitnessProfile.experienceLevel || 'Beginner',
+                    alternatives: alternativeIds
+                });
+                await exercise.save();
+            }
+            return exercise._id;
+        };
+
+        // Process exercises
+        const dayExercises = [];
+        for (const ex of aiDayResponse.exercises || []) {
+            const exerciseId = await syncExercise(ex);
+            dayExercises.push({
+                exercise: exerciseId,
+                sets: ex.sets || 3,
+                reps: ex.reps || '10-12',
+                completed: false
+            });
+        }
+
+        // Add new day to plan
+        plan.days.push({
+            dayNumber: nextDayNumber,
+            type: aiDayResponse.workoutFocus || 'Mixed',
+            exercises: dayExercises
+        });
+
+        await plan.save();
+
+        // Populate and return
+        const updatedPlan = await WorkoutPlan.findById(plan._id).populate({
+            path: 'days.exercises.exercise',
+            populate: { path: 'alternatives' }
+        });
+
+        console.log(`Successfully generated and added Day ${nextDayNumber}`);
+        res.json(updatedPlan);
+    } catch (err) {
+        console.error('Error generating next day:', err.message);
+        res.status(500).json({ msg: 'Server error generating next day', error: err.message });
     }
 });
 

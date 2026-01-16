@@ -4,6 +4,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { AuthContext } from '../context/AuthContext';
 import { useWorkoutPlan } from '../hooks/useWorkoutPlan';
 import { useActivity } from '../hooks/useActivity';
+import { useApi } from '../hooks/useApi';
 import ScreenWrapper from '../components/ScreenWrapper';
 import { COLORS, FONTS, SIZES } from '../constants/theme';
 import AppButton from '../components/AppButton';
@@ -16,17 +17,20 @@ import Tag from '../components/Tag';
 import WorkoutPlanSkeleton from '../components/WorkoutPlanSkeleton';
 
 const HomeScreen = ({ navigation }) => {
-    const { userToken } = useContext(AuthContext);
+    const { userToken, userInfo, refreshUserInfo } = useContext(AuthContext);
     const { plan, loading, refreshing, error, refetch } = useWorkoutPlan();
-    const { stats, weeklyData, loading: activityLoading } = useActivity();
+    const { stats, weeklyData, loading: activityLoading, refetch: refetchActivity } = useActivity();
     const isFocused = useIsFocused();
+    const [advancingDay, setAdvancingDay] = React.useState(false);
+    const api = useApi();
 
     // Refetch when screen comes into focus
     useEffect(() => {
         if (isFocused) {
             refetch();
+            refetchActivity();
         }
-    }, [isFocused, refetch]);
+    }, [isFocused, refetch, refetchActivity]);
 
     if (loading) {
         return (
@@ -79,7 +83,66 @@ const HomeScreen = ({ navigation }) => {
     );
 
     const renderTodayWorkout = () => {
-        const day = plan.days[0]; // Simplified
+        // Get current day from user profile, default to 1
+        const currentDay = userInfo?.currentWorkoutDay || 1;
+        const day = plan.days.find(d => d.dayNumber === currentDay) || plan.days[0];
+
+        // Calculate progress through plan
+        const totalDays = plan.days.length;
+        const progressPercent = Math.round((currentDay / totalDays) * 100);
+
+        const handlePreviousDay = async () => {
+            if (currentDay <= 1) {
+                Alert.alert('Info', 'You are already on Day 1');
+                return;
+            }
+
+            try {
+                setAdvancingDay(true);
+                await api.updateCurrentDay(currentDay - 1);
+                await refreshUserInfo();
+                await refetch();
+            } catch (error) {
+                console.error('Error going to previous day:', error);
+                Alert.alert('Error', 'Failed to go to previous day');
+            } finally {
+                setAdvancingDay(false);
+            }
+        };
+
+        const handleNextDay = async () => {
+            const nextDayNumber = currentDay + 1;
+
+            // Check if next day already exists in the plan
+            const nextDayExists = plan.days.find(d => d.dayNumber === nextDayNumber);
+
+            try {
+                setAdvancingDay(true);
+
+                if (!nextDayExists) {
+                    // Generate new day if it doesn't exist
+                    console.log(`Day ${nextDayNumber} doesn't exist, generating with AI...`);
+                    await api.generateAndAdvanceDay();
+                }
+
+                // Update current day pointer
+                await api.updateCurrentDay(nextDayNumber);
+
+                // Refresh user info and workout plan
+                await refreshUserInfo();
+                await refetch();
+                await refetchActivity();
+
+                if (!nextDayExists) {
+                    Alert.alert('Success!', `Advanced to Day ${nextDayNumber}! New workout generated.`);
+                }
+            } catch (error) {
+                console.error('Error advancing day:', error);
+                Alert.alert('Error', error.message || 'Failed to advance to next day');
+            } finally {
+                setAdvancingDay(false);
+            }
+        };
 
         return (
             <View style={styles.section}>
@@ -109,7 +172,7 @@ const HomeScreen = ({ navigation }) => {
                                         ...ex.exercise,
                                         sets: ex.sets,
                                         reps: ex.reps,
-                                        _id: ex.exercise._id // Maintain ID
+                                        _id: ex.exercise._id
                                     },
                                     planId: plan._id,
                                     dayNumber: day.dayNumber,
@@ -117,11 +180,24 @@ const HomeScreen = ({ navigation }) => {
                                     dayExercises: day.exercises
                                 });
                             }}>
-                                <View style={[styles.optionIcon, { backgroundColor: 'rgba(46, 106, 255, 0.1)' }]}>
-                                    <Ionicons name="fitness-outline" size={16} color={COLORS.primary} />
+                                <View style={[
+                                    styles.optionIcon,
+                                    { backgroundColor: ex.completed ? 'rgba(46, 255, 106, 0.1)' : 'rgba(46, 106, 255, 0.1)' }
+                                ]}>
+                                    <Ionicons
+                                        name={ex.completed ? "checkmark-circle" : "fitness-outline"}
+                                        size={16}
+                                        color={ex.completed ? COLORS.success : COLORS.primary}
+                                    />
                                 </View>
                                 <View style={{ flex: 1, marginLeft: 10 }}>
-                                    <Text style={styles.exerciseName} numberOfLines={1}>
+                                    <Text
+                                        style={[
+                                            styles.exerciseName,
+                                            ex.completed && { textDecorationLine: 'line-through', opacity: 0.6 }
+                                        ]}
+                                        numberOfLines={1}
+                                    >
                                         {ex.exercise ? ex.exercise.name : 'Unknown Exercise'}
                                     </Text>
                                     <Text style={styles.exerciseMeta}>{ex.sets} sets x {ex.reps} reps</Text>
@@ -129,6 +205,35 @@ const HomeScreen = ({ navigation }) => {
                                 <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
                             </TouchableOpacity>
                         ))}
+
+                        {/* Progress indicator */}
+                        <View style={{ marginTop: 15, marginBottom: 10 }}>
+                            <Text style={{ ...FONTS.body4, color: COLORS.textSecondary, marginBottom: 5 }}>Progress: Day {currentDay} of {totalDays} ({progressPercent}%)</Text>
+                            <View style={{ height: 4, backgroundColor: COLORS.surfaceLight, borderRadius: 2, overflow: 'hidden' }}>
+                                <View style={{ width: `${progressPercent}%`, height: '100%', backgroundColor: COLORS.primary }} />
+                            </View>
+                        </View>
+
+                        <View style={{ flexDirection: 'row', gap: 10, marginTop: 15 }}>
+                            {currentDay > 1 && (
+                                <AppButton
+                                    title="← Previous"
+                                    onPress={handlePreviousDay}
+                                    loading={advancingDay}
+                                    variant="secondary"
+                                    style={{ flex: 1 }}
+                                />
+                            )}
+                            {currentDay < 30 && (
+                                <AppButton
+                                    title="Next Day →"
+                                    onPress={handleNextDay}
+                                    loading={advancingDay}
+                                    variant="secondary"
+                                    style={{ flex: 1 }}
+                                />
+                            )}
+                        </View>
 
                         <AppButton
                             title="Start Workout"

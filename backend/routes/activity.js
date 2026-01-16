@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/authMiddleware');
 const Activity = require('../models/Activity');
 
 // @route   POST /api/activity/log-workout

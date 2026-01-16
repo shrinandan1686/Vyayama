@@ -26,9 +26,9 @@ class ApiService {
             (response) => response,
             (error) => {
                 if (error.response) {
-                    // 404 is a valid response (e.g., no workout plan found yet)
-                    // Don't log it as an error to avoid confusion
-                    if (error.response.status !== 404) {
+                    // 404/400 are often valid responses (e.g., no workout plan found yet)
+                    // Don't log them as errors to avoid confusion for users
+                    if (error.response.status !== 404 && error.response.status !== 400) {
                         console.error('API Error:', error.response.status, error.response.data);
                     }
                 } else if (error.request) {
@@ -57,12 +57,12 @@ class ApiService {
     // ============ AUTH ENDPOINTS ============
 
     async register(email, password, name) {
-        const { data } = await this.api.post('/users/register', { email, password, name });
+        const { data } = await this.api.post('/auth/register', { email, password, name });
         return data;
     }
 
     async login(email, password) {
-        const { data } = await this.api.post('/users/login', { email, password });
+        const { data } = await this.api.post('/auth/login', { email, password });
         return data;
     }
 
@@ -79,8 +79,8 @@ class ApiService {
     }
 
     async completeOnboarding(onboardingData) {
-        const { data } = await this.api.post('/users/onboarding', onboardingData);
-        return data;
+        // Redirect to updateProfile as it handles the Same logic
+        return this.updateProfile(onboardingData);
     }
 
     // ============ WORKOUT PLAN ENDPOINTS ============
@@ -90,8 +90,8 @@ class ApiService {
         return data;
     }
 
-    async generateWorkoutPlan(userProfile) {
-        const { data } = await this.api.post('/workout-plans/generate', userProfile);
+    async generateWorkoutPlan(userProfile = {}) {
+        const { data } = await this.api.post('/workout-plans', userProfile);
         return data;
     }
 
@@ -100,8 +100,9 @@ class ApiService {
         return data;
     }
 
-    async updateDayProgress(planId, dayNumber, completed) {
-        const { data } = await this.api.put(`/workout-plans/${planId}/days/${dayNumber}`, { completed });
+    async updateExerciseProgress(planId, dayNumber, exerciseId, progressData) {
+        // progressData: { completed, skipped, alternativeUsed }
+        const { data } = await this.api.put(`/workout-plans/${planId}/day/${dayNumber}/exercise/${exerciseId}`, progressData);
         return data;
     }
 
@@ -122,7 +123,9 @@ class ApiService {
     }
 
     async getChatHistory(sessionId) {
-        const { data } = await this.api.get(`/chat/history/${sessionId}`);
+        const { data } = await this.api.get('/chat/history', {
+            params: { sessionId }
+        });
         return data;
     }
 
@@ -150,6 +153,25 @@ class ApiService {
 
     async getWeeklyActivity() {
         const { data } = await this.api.get('/activity/weekly');
+        return data;
+    }
+
+    // ============ USER DAY PROGRESSION ============
+
+    async updateCurrentDay(day) {
+        const { data } = await this.api.put('/users/current-day', { currentWorkoutDay: day });
+        return data;
+    }
+
+    async advanceToNextDay() {
+        // Get current profile to know current day
+        const profile = await this.getProfile();
+        const nextDay = (profile.currentWorkoutDay || 1) + 1;
+        return this.updateCurrentDay(nextDay);
+    }
+
+    async generateAndAdvanceDay() {
+        const { data } = await this.api.post('/workout-plans/next-day');
         return data;
     }
 }

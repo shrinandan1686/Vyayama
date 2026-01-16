@@ -23,8 +23,8 @@ export const useWorkoutPlan = () => {
             const data = await api.getWorkoutPlan();
             setPlan(data);
         } catch (e) {
-            // 404 means no plan found - this is not an error, just an empty state
-            if (e.response?.status === 404) {
+            // 404/400 means no plan found - this is not an error, just an empty state
+            if (e.response?.status === 404 || e.response?.status === 400) {
                 setPlan(null);
                 setError(null);
             } else {

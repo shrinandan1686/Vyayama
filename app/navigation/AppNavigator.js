@@ -16,7 +16,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
-    const { isLoading, userToken } = useContext(AuthContext);
+    const { isLoading, userToken, hasOnboarded } = useContext(AuthContext);
 
     if (isLoading) {
         return (
@@ -33,6 +33,13 @@ const AppNavigator = () => {
                     <>
                         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
                         <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
+                    </>
+                ) : !hasOnboarded ? (
+                    <>
+                        <Stack.Screen name="Onboarding" component={OnboardingWizard} options={{ headerShown: false }} />
+                        <Stack.Screen name="MainTabs" component={TabsNavigator} options={{ headerShown: false }} />
+                        <Stack.Screen name="ExerciseDetail" component={ExerciseDetailScreen} options={{ headerShown: false }} />
+                        <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
                     </>
                 ) : (
                     <>

@@ -42,7 +42,7 @@ const RadioOption = ({ label, selected, onPress }) => (
 );
 
 const OnboardingWizard = ({ navigation }) => {
-    const { userToken } = useContext(AuthContext);
+    const { userToken, checkOnboardingStatus } = useContext(AuthContext);
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
 
@@ -105,6 +105,9 @@ const OnboardingWizard = ({ navigation }) => {
             await axios.post(`${API_URL}/workout-plans`, {}, {
                 headers: { 'x-auth-token': userToken }
             });
+
+            // 3. Refresh Auth Context
+            await checkOnboardingStatus(userToken);
 
             navigation.replace('MainTabs');
 

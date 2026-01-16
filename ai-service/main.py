@@ -78,6 +78,11 @@ class WorkoutPlan(BaseModel):
     goal: str
     days: List[DailyWorkout]
 
+class NextDayRequest(BaseModel):
+    profile: UserProfile
+    currentDay: int = Field(..., description="The current day number to generate (e.g., 2 for Day 2)")
+    previousWorkoutFocus: Optional[str] = Field(None, description="Focus of the previous workout for context")
+
 class ChatRequest(BaseModel):
     message: str
     context: Optional[str] = None
@@ -443,19 +448,18 @@ def generate_plan(profile: UserProfile):
     return hydrate_plan(generated_routine, profile)
 
 def hydrate_plan(generated_routine, profile):
-    # Hydrate 30-Day Plan
-    full_days = []
+    # Only create Day 1 during onboarding
+    # Subsequent days will be generated dynamically when user advances
     exercise_list = generated_routine.get("exercises", [])
     focus = generated_routine.get("workoutFocus", "General")
     
-    for i in range(1, 31):
-        is_rest = (i % 4 == 0)
-        full_days.append({
-            "dayNumber": i,
-            "workoutFocus": "Rest" if is_rest else focus,
-            "estimatedTimeMinutes": 0 if is_rest else 45,
-            "exercises": [] if is_rest else exercise_list
-        })
+    # Create only Day 1
+    full_days = [{
+        "dayNumber": 1,
+        "workoutFocus": focus,
+        "estimatedTimeMinutes": 45,
+        "exercises": exercise_list
+    }]
         
     return {
         "planDurationDays": 30,
@@ -464,6 +468,134 @@ def hydrate_plan(generated_routine, profile):
         "goal": profile.goal,
         "days": full_days
     }
+
+@app.post("/generate-next-day", response_model=DailyWorkout)
+def generate_next_day(request: NextDayRequest):
+    """
+    Generate a single next day's workout dynamically.
+    This allows for progressive workout generation instead of pre-generating all 30 days.
+    """
+    
+    profile = request.profile
+    day_number = request.currentDay
+    
+    # Determine if this should be a rest day
+    is_rest_day = (day_number % 4 == 0)
+    
+    if is_rest_day:
+        return {
+            "dayNumber": day_number,
+            "workoutFocus": "Rest",
+            "estimatedTimeMinutes": 0,
+            "exercises": []
+        }
+    
+    # Build progressive prompt with workout splits for variety
+    schema_instr = RoutineResponse.model_json_schema()
+    
+    # Determine workout split based on day number for variety
+    # Using 3-day split: Push, Pull, Legs (repeating)
+    split_rotation = ["Push (Chest, Shoulders, Triceps)", "Pull (Back, Biceps)", "Legs (Quads, Hamstrings, Glutes, Calves)"]
+    workout_split = split_rotation[(day_number - 1) % 3]
+    
+    # Add variation notes
+    variation_note = ""
+    if day_number % 3 == 1:
+        variation_note = "\nVARIATION: Try to include compound movements like bench press, shoulder press"
+    elif day_number % 3 == 2:
+        variation_note = "\nVARIATION: Include rows, pulldowns, and pulling movements"
+    else:
+        variation_note = "\nVARIATION: Focus on squats, lunges, leg press variations"
+    
+    progression_context = f"""
+    This is Day {day_number} of the user's 30-day progressive workout plan.
+    {'Previous workout focus: ' + request.previousWorkoutFocus if request.previousWorkoutFocus else ''}
+    
+    WORKOUT SPLIT FOR TODAY: {workout_split}
+    {variation_note}
+    
+    Consider progression:
+    - Early days (1-10): Focus on form and building foundation, 3-4 sets per exercise
+    - Mid days (11-20): Increase intensity slightly, 4 sets per exercise  
+    - Later days (21-30): Progressive overload and variation, 4-5 sets per exercise
+    
+    IMPORTANT: Generate DIFFERENT exercises than previous days. Vary the exercise selection each day.
+    """
+    
+    prompt = f"""
+    You are a strict API endpoint. You must generate a workout routine in valid JSON format matching the following schema exactly.
+    Do not add any markdown formatting (like ```json), do not add introduction text, do not add explanations. 
+    Output ONLY the raw JSON object.
+
+    Schema:
+    {schema_instr}
+
+    Request:
+    Create a 1-Day Workout Routine for Day {day_number}:
+    FOCUS: {workout_split}
+    Goal: {profile.goal}
+    Experience: {profile.experience_level}
+    Equipment: {', '.join(profile.equipment)}
+    Focus Areas: {', '.join(profile.focus_areas) if profile.focus_areas else 'General'}
+    Injuries: {', '.join(profile.injuries) if profile.injuries else 'None'}
+    
+    {progression_context}
+    """
+    
+    # Check mock mode
+    if USE_MOCK_AI:
+        mock_routine = get_mock_plan_data()
+        return {
+            "dayNumber": day_number,
+            "workoutFocus": mock_routine["workoutFocus"],
+            "estimatedTimeMinutes": 45,
+            "exercises": mock_routine["exercises"]
+        }
+    
+    # Try to generate with AI
+    try:
+        agent = get_planner_agent()
+        response = agent.run(prompt)
+        routine_response = response.content
+        
+        # Parse response (same logic as generate-plan)
+        generated_routine = None
+        if isinstance(routine_response, dict):
+            generated_routine = routine_response.get("routine", {})
+            if isinstance(generated_routine, dict) and "exercises" not in generated_routine and "exercises" in routine_response:
+                generated_routine = routine_response
+        elif hasattr(routine_response, "routine"):
+            generated_routine = routine_response.routine.dict()
+        elif isinstance(routine_response, str):
+            import json
+            import re
+            match = re.search(r"\{.*\}", routine_response, re.DOTALL)
+            if match:
+                parsed = json.loads(match.group(0))
+                generated_routine = parsed.get("routine", parsed)
+            else:
+                raise ValueError("Could not parse AI response")
+        
+        if not generated_routine:
+            raise ValueError("Empty routine generated")
+        
+        return {
+            "dayNumber": day_number,
+            "workoutFocus": generated_routine.get("workoutFocus", "Full Body"),
+            "estimatedTimeMinutes": 45,
+            "exercises": generated_routine.get("exercises", [])
+        }
+        
+    except Exception as e:
+        print(f"AI GENERATION FAILED FOR NEXT DAY: {e}")
+        print("FALLING BACK TO MOCK DATA")
+        mock_routine = get_mock_plan_data()
+        return {
+            "dayNumber": day_number,
+            "workoutFocus": mock_routine["workoutFocus"],
+            "estimatedTimeMinutes": 45,
+            "exercises": mock_routine["exercises"]
+        }
 
 
 if __name__ == "__main__":

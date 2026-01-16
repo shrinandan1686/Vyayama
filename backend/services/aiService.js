@@ -12,6 +12,20 @@ const generateWorkoutPlan = async (userProfile) => {
     }
 };
 
+const generateNextDay = async (userProfile, currentDay, previousWorkoutFocus = null) => {
+    try {
+        const response = await axios.post(`${AI_SERVICE_URL}/generate-next-day`, {
+            profile: userProfile,
+            currentDay: currentDay,
+            previousWorkoutFocus: previousWorkoutFocus
+        });
+        return response.data; // Returns DailyWorkout object
+    } catch (error) {
+        console.error('Error generating next day:', error.message);
+        throw error;
+    }
+};
+
 const assessUser = async (userProfile) => {
     try {
         const response = await axios.post(`${AI_SERVICE_URL}/assess-user`, userProfile);
@@ -80,6 +94,7 @@ const resetChatSession = async (userId, sessionId = null) => {
 
 module.exports = {
     generateWorkoutPlan,
+    generateNextDay,
     assessUser,
     chatWithAI,
     getChatHistory,
