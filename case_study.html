@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vyayama | Senior PM Case Study: Adaptive AI Fitness</title>
+    <title>Vyayama | Senior PM & UX Case Study: Adaptive AI Fitness</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -19,7 +19,8 @@
             --text-dim: #999999;
             --card-bg: rgba(255, 255, 255, 0.03);
             --border: rgba(255, 255, 255, 0.1);
-            --radius: 32px;
+            --radius: 40px;
+            --radius-sm: 20px;
             --font-header: 'Syne', sans-serif;
             --font-body: 'Inter', sans-serif;
         }
@@ -28,14 +29,14 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            cursor: crosshair;
+            cursor: default;
         }
 
         body {
             background-color: var(--bg);
             color: var(--text);
             font-family: var(--font-body);
-            line-height: 1.5;
+            line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
         }
@@ -47,248 +48,271 @@
             width: 100%;
             height: 100%;
             background: url('https://grainy-gradients.vercel.app/noise.svg');
-            opacity: 0.15;
+            opacity: 0.12;
             pointer-events: none;
             z-index: 9999;
         }
 
         .container {
-            max-width: 1280px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 0 40px;
-        }
-
-        ::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--bg);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 2px;
+            padding: 0 60px;
         }
 
         h1,
         h2,
-        h3 {
+        h3,
+        h4 {
             font-family: var(--font-header);
             text-transform: uppercase;
-            line-height: 0.9;
-            letter-spacing: -0.04em;
+            line-height: 0.85;
+            letter-spacing: -0.05em;
         }
 
         p {
             font-weight: 300;
             color: var(--text-dim);
-            font-size: 1.1rem;
+            font-size: 1.15rem;
         }
 
-        nav {
-            padding: 40px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-family: var(--font-header);
-            font-weight: 800;
-            font-size: 1.2rem;
-            color: var(--secondary);
-        }
-
+        /* Hero Section */
         .hero {
-            height: 90vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            padding-top: 100px;
             position: relative;
         }
 
         .hero h1 {
-            font-size: clamp(4rem, 10vw, 8rem);
-            margin-bottom: 20px;
+            font-size: clamp(5rem, 15vw, 14rem);
+            margin-bottom: 40px;
             z-index: 2;
         }
 
-        .hero .subtitle {
-            font-size: 1.4rem;
-            max-width: 700px;
-            margin-bottom: 40px;
-            color: var(--text);
-            line-height: 1.4;
+        .hero-meta {
+            display: flex;
+            gap: 100px;
+            margin-top: 40px;
+            z-index: 2;
         }
 
-        .hero-img {
+        .meta-item span {
+            display: block;
+            font-family: var(--font-header);
+            color: var(--secondary);
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .hero-lifestyle {
             position: absolute;
-            right: 0;
-            top: 50%;
+            right: -100px;
+            top: 55%;
             transform: translateY(-50%);
-            width: 50%;
-            height: 70%;
-            border-radius: var(--radius);
+            width: 55%;
+            height: 80%;
+            border-radius: var(--radius) 0 0 var(--radius);
             overflow: hidden;
             z-index: 1;
-            filter: grayscale(0.2) brightness(0.7);
-            transition: 0.5s;
+            filter: grayscale(0.2) brightness(0.8);
         }
 
-        .hero-img img {
+        .hero-lifestyle img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
+        /* Sections */
         section {
-            padding: 120px 0;
+            padding: 180px 0;
+        }
+
+        .section-header {
+            margin-bottom: 100px;
         }
 
         .tag {
             font-family: var(--font-header);
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             color: var(--secondary);
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             display: block;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
+        }
+
+        .section-title {
+            font-size: clamp(3rem, 8vw, 6rem);
+            margin-bottom: 32px;
         }
 
         .section-desc {
-            font-size: 2.2rem;
-            line-height: 1.1;
+            font-size: 1.8rem;
             max-width: 900px;
             color: var(--text);
-            margin-bottom: 80px;
+            line-height: 1.2;
         }
 
-        /* Bento Grid */
-        .bento {
+        /* Design Process */
+        .process-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            grid-auto-rows: auto;
-            gap: 20px;
+            gap: 24px;
+            margin-top: 80px;
         }
 
-        .bento-item {
+        .process-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: var(--radius);
             padding: 40px;
-            position: relative;
-            overflow: hidden;
-            transition: 0.3s;
+            border-radius: var(--radius-sm);
         }
 
-        .bento-item:hover {
-            border-color: var(--secondary);
-        }
-
-        .bento-large {
-            grid-column: span 2;
-            grid-row: span 2;
-        }
-
-        .bento-wide {
-            grid-column: span 2;
-        }
-
-        .bento-item h3 {
-            font-size: 1.4rem;
-            margin-bottom: 15px;
+        .process-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
             color: var(--secondary);
         }
 
-        .bento-item .val {
-            font-size: 5rem;
-            font-family: var(--font-header);
-            color: var(--accent);
-            line-height: 1;
+        /* Persona Cards */
+        .persona-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 60px;
+            align-items: center;
         }
 
-        .bento-item .label {
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            margin-top: 10px;
-        }
-
-        /* Tables & Lists */
-        .strategy-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 40px;
-        }
-
-        .strategy-table th,
-        .strategy-table td {
-            text-align: left;
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .strategy-table th {
-            font-family: var(--font-header);
-            color: var(--secondary);
-            font-size: 0.9rem;
-        }
-
-        /* Screens */
-        .screen-showcase {
-            display: flex;
-            gap: 40px;
-            margin-top: 40px;
-            align-items: flex-start;
-        }
-
-        .screen-card {
-            flex: 1;
+        .persona-card {
             background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 60px;
+            margin-bottom: 32px;
+        }
+
+        .persona-card blockquote {
+            font-size: 1.4rem;
+            font-style: italic;
+            color: var(--text);
+            margin-bottom: 24px;
+            border-left: 4px solid var(--secondary);
+            padding-left: 24px;
+        }
+
+        /* Detailed Showcase */
+        .feature-block {
+            margin-bottom: 200px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 120px;
+            align-items: center;
+        }
+
+        .feature-content h2 {
+            font-size: 4rem;
+            margin-bottom: 32px;
+        }
+
+        .rationale {
+            background: rgba(46, 106, 255, 0.08);
+            border-left: 4px solid var(--accent);
+            padding: 32px;
+            margin-top: 40px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        }
+
+        .rationale h4 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--accent);
+        }
+
+        .feature-visual img {
+            width: 100%;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Sitemap & Design System */
+        .visual-asset {
+            width: 100%;
             border-radius: var(--radius);
             overflow: hidden;
+            margin-top: 80px;
             border: 1px solid var(--border);
         }
 
-        .screen-card img {
+        .visual-asset img {
             width: 100%;
             display: block;
         }
 
-        .analysis-box {
-            background: rgba(46, 106, 255, 0.05);
+        /* Strategy Table */
+        .table-container {
+            margin-top: 80px;
+            background: #0a0a0a;
             padding: 40px;
             border-radius: var(--radius);
-            margin-top: 40px;
-            border: 1px dashed var(--accent);
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            font-family: var(--font-header);
+            color: var(--secondary);
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
         }
 
         footer {
-            padding: 100px 0;
-            border-top: 1px solid var(--border);
+            padding: 120px 0;
             text-align: center;
+            border-top: 1px solid var(--border);
         }
 
-        @media (max-width: 900px) {
-            .hero-img {
-                display: none;
+        /* Mobile */
+        @media (max-width: 1100px) {
+            .hero-lifestyle {
+                position: static;
+                width: 100%;
+                height: 400px;
+                margin-top: 60px;
+                transform: none;
+                border-radius: var(--radius);
             }
 
             .hero h1 {
-                font-size: 4rem;
+                font-size: 5rem;
             }
 
-            .bento {
+            .process-grid,
+            .feature-grid,
+            .persona-grid {
                 grid-template-columns: 1fr;
             }
 
-            .bento-large,
-            .bento-wide {
-                grid-column: span 1;
+            .feature-grid {
+                gap: 60px;
             }
 
-            .screen-showcase {
-                flex-direction: column;
+            .container {
+                padding: 0 30px;
             }
         }
     </style>
@@ -297,166 +321,213 @@
 <body>
     <div class="noise"></div>
 
-    <nav class="container">
-        <div class="logo">VYAYAMA // PM VERSION</div>
-        <div class="subtitle" style="font-size: 0.8rem; letter-spacing: 1px;">STRATEGIC PRODUCT CASE STUDY</div>
-    </nav>
-
     <main>
-        <!-- EXECUTIVE SUMMARY -->
+        <!-- HERO -->
         <header class="hero container">
-            <h1>INTELLIGENT<br>LIFECYCLE</h1>
-            <p class="subtitle">Solving for churn in high-friction fitness environments. A deep dive into the
-                <strong>Retention-Adaptive</strong> AI architecture of Vyayama.</p>
-            <div class="hero-img">
-                <img src="./vyayama_hero_abstract_1769952806477.png" alt="Vyayama Abstract">
+            <span class="tag">01 / PROJECT OVERVIEW</span>
+            <h1>VYAYAMA</h1>
+            <div class="hero-meta">
+                <div class="meta-item">
+                    <span>ROLE</span>
+                    <p>Senior Product Manager & UX Lead</p>
+                </div>
+                <div class="meta-item">
+                    <span>PLATFORM</span>
+                    <p>iOS / Android (React Native)</p>
+                </div>
+                <div class="meta-item">
+                    <span>DURATION</span>
+                    <p>12 Weeks</p>
+                </div>
+            </div>
+            <div class="hero-lifestyle">
+                <img src="./vyayama_lifestyle_mockup_1770040967252.png" alt="Vyayama in the Gym">
             </div>
         </header>
 
-        <!-- MARKET ANALYSIS -->
+        <!-- THE CHALLENGE -->
         <section class="container">
-            <span class="tag">01 / MARKET CONTEXT</span>
-            <p class="section-desc">The $5.1B digital fitness market is plagued by a 65% Month-3 churn rate. Legacy apps
-                offer <strong>content</strong>; Vyayama offers <strong>agency</strong>.</p>
+            <div class="section-header">
+                <span class="tag">02 / THE CHALLENGE</span>
+                <h2 class="section-title">THE ABANDONMENT LOOP</h2>
+                <p class="section-desc">Traditional fitness apps fail because gyms are unpredictable. Our research
+                    showed that <strong>90% of users churn within 6 months</strong> because their apps can't handle
+                    real-world friction like crowded equipment or fluctuating energy levels.</p>
+            </div>
 
-            <div class="bento">
-                <div class="bento-item bento-large">
-                    <h3>Competitive Landscape</h3>
-                    <p>While MyFitnessPal (Tracking) and Fitbod (Automation) dominate, they lack real-time adaptability.
-                        My research showed that <strong>42% of gym sessions</strong> are disrupted by occupied
-                        equipment, causing users to abandon their tracking apps.</p>
-                    <table class="strategy-table">
-                        <tr>
-                            <th>Competitor</th>
-                            <th>Strategy</th>
-                            <th>Gap</th>
-                        </tr>
-                        <tr>
-                            <td>MyFitnessPal</td>
-                            <td>Low-friction entry</td>
-                            <td>No coaching depth</td>
-                        </tr>
-                        <tr>
-                            <td>Fitbod</td>
-                            <td>Algorithmic plan</td>
-                            <td>Rigid equipment dependency</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Vyayama</strong></td>
-                            <td><strong>JIT Adaptation</strong></td>
-                            <td><strong>Predictive Coaching</strong></td>
-                        </tr>
-                    </table>
+            <div class="process-grid">
+                <div class="process-card">
+                    <h3>DEFINE</h3>
+                    <p>Identifying equipment flexibility as the #1 driver of retention.</p>
                 </div>
-                <div class="bento-item">
-                    <h3>The Problem</h3>
-                    <p>High cognitive load during workouts + lack of equipment flexibility = "The Abandonment Loop."</p>
+                <div class="process-card">
+                    <h3>RESEARCH</h3>
+                    <p>Analyzing 50+ user interviews to map the "Corstisol Spike" in busy gyms.</p>
                 </div>
-                <div class="bento-item">
-                    <h3>North Star</h3>
-                    <div class="val">88%</div>
-                    <p class="label">Target Weekly Plan Completion Rate</p>
+                <div class="process-card">
+                    <h3>IDEATE</h3>
+                    <p>Concepting a Just-In-Time (JIT) AI generation architecture.</p>
+                </div>
+                <div class="process-card">
+                    <h3>DESIGN</h3>
+                    <p>High-fidelity system based on performance-utility aesthetics.</p>
                 </div>
             </div>
         </section>
 
-        <!-- STRATEGY & PRIORITIZATION -->
-        <section class="container" style="background: #111; border-radius: var(--radius); padding: 80px 40px;">
-            <span class="tag">02 / STRATEGY & PRIORITIZATION</span>
-            <h2 style="font-size: 3.5rem; margin-bottom: 40px;">THE RICE FRAMEWORK</h2>
-            <p style="max-width: 800px; margin-bottom:60px;">To maximize ROI on a limited dev cycle, I prioritized based
-                on **Impact vs. Effort**, specifically focusing on features that reduced "Time to Workout."</p>
-
-            <div class="bento">
-                <div class="bento-item">
-                    <h3>Reach</h3>
-                    <p>High: Mobile-first allows 100% gym-availability.</p>
-                </div>
-                <div class="bento-item">
-                    <h3>Impact</h3>
-                    <p>XL: Dynamic swapping reduces session abandonment by 40%.</p>
-                </div>
-                <div class="bento-item">
-                    <h3>Effort</h3>
-                    <p>Medium: Leveraged Agno & Gemini for orchestration.</p>
-                </div>
-                <div class="bento-item">
-                    <h3>RICE Score</h3>
-                    <div class="val">180</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- CORE PRODUCT THINKING -->
+        <!-- PERSONAS -->
         <section class="container">
-            <span class="tag">03 / PRODUCT EXECUTION</span>
-            <p class="section-desc">We prioritized "Just-In-Time" (JIT) generation over pre-set 30-day buckets. Why?
-                Because a user's recovery and equipment availability change daily.</p>
+            <div class="section-header">
+                <span class="tag">03 / USER RESEARCH</span>
+                <h2 class="section-title">THE ARCHETYPES</h2>
+            </div>
 
-            <div class="screen-showcase">
-                <div class="screen-card">
-                    <img src="./vyayama_dashboard_mockup_1769952825757.png" alt="Dashboard">
-                    <div class="screen-info" style="padding: 40px;">
-                        <h4>The Progression Hook</h4>
-                        <p>Visualizing "The Arch" instead of just "The Day." UI emphasizes the dopamine hit of closing
-                            daily streaks.</p>
+            <div class="persona-grid">
+                <div class="visual-asset">
+                    <img src="./vyayama_personas_visual_1770038917140.png" alt="User Personas">
+                </div>
+                <div class="persona-flows">
+                    <div class="persona-card">
+                        <h3>THE PLATEAUD PRO</h3>
+                        <blockquote>"I've been lifting for 5 years. I know what to do, but I'm bored of my routine and I
+                            don't have time to manually plan progression."</blockquote>
+                        <p><strong>Goal:</strong> Automatic progressive overload without manual math.
+                            <strong>Pain:</strong> Hits walls because static apps don't adjust to their fatigue.</p>
                     </div>
-                </div>
-                <div class="screen-card">
-                    <img src="./vyayama_chat_mockup_1769952842616.png" alt="Coach">
-                    <div class="screen-info" style="padding: 40px;">
-                        <h4>Modal Multi-Modal AI</h4>
-                        <p>User takes a photo of an occupied rack &rarr; AI re-routes the workout instantly. This is the
-                            <strong>Magic Moment</strong> that drives LTV.</p>
+                    <div class="persona-card">
+                        <h3>THE TRAVELING WARRIOR</h3>
+                        <blockquote>"I'm in a different hotel gym every week. Half the time they don't have a rack. My
+                            current app just breaks when that happens."</blockquote>
+                        <p><strong>Goal:</strong> Consistency anywhere. <strong>Pain:</strong> Equipment scarcity leads
+                            to broken streaks and loss of motivation.</p>
                     </div>
                 </div>
             </div>
+        </section>
 
-            <div class="analysis-box">
-                <h3>Technical Product Decision: Memory Persistence</h3>
-                <p>I advocated for a backend architecture that stores chat sessions using <strong>JSON session
-                        history</strong>. This allows the AI to "remember" previous injuries or preferences (e.g., "I
-                    hate squats"), creating a switching cost for the user that increases stickiness.</p>
+        <!-- ARCHITECTURE -->
+        <section class="container">
+            <div class="section-header">
+                <span class="tag">04 / ARCHITECTURE</span>
+                <h2 class="section-title">INFORMATION DESIGN</h2>
+                <p class="section-desc">We moved away from "static buckets" to a centralized **Decision Logic** where
+                    user memory and real-time environment data collide.</p>
+            </div>
+
+            <div class="visual-asset">
+                <img src="./vyayama_sitemap_visual_1770041100856.png" alt="Sitemap & IA">
             </div>
         </section>
 
-        <!-- GTM & GROWTH -->
+        <!-- DESIGN SYSTEM -->
+        <section class="container" style="background: #0a0a0a; border-radius: var(--radius); padding: 120px 60px;">
+            <div class="section-header">
+                <span class="tag">05 / DESIGN SYSTEM</span>
+                <h2 class="section-title">VISUAL IDENTITY</h2>
+                <p class="section-desc">Optimized for high-adrenaline, low-light environments. High contrast, aggressive
+                    typography, and glassmorphism depth.</p>
+            </div>
+
+            <div class="visual-asset">
+                <img src="./vyayama_design_system_visual_1770041291050.png" alt="Vyayama Design System">
+            </div>
+        </section>
+
+        <!-- FEATURE: THE DASHBOARD -->
         <section class="container">
-            <span class="tag">04 / GTM & GROWTH</span>
-            <div class="bento">
-                <div class="bento-item bento-wide">
-                    <h3>Acquisition: The "Aha!" Loop</h3>
-                    <p>Targeting "Intermediate Plateaus"—users who know *how* to lift but have stopped seeing results.
-                        Strategy: Partner with niche fitness influencers to demonstrate the <strong>Alternative
-                            Swap</strong> feature in busy commercial gyms.</p>
+            <div class="feature-block">
+                <div class="feature-grid">
+                    <div class="feature-content">
+                        <span class="tag">FEATURE 01</span>
+                        <h2>ADAPTIVE<br>DASHBOARD</h2>
+                        <p>The core hub for progress. Instead of showing the "Month," we show "The Arch"—a visualized
+                            progression line that motivates the user toward their specific North Star.</p>
+                        <div class="rationale">
+                            <h4>UX RATIONALE: JIT GENERATION</h4>
+                            <p>By only generating the daily workout 5 minutes before the session starts, we account for
+                                the user's latest recovery metrics and prevent "The Intimidation Factor" of seeing a
+                                rigid 30-day block.</p>
+                        </div>
+                    </div>
+                    <div class="feature-visual">
+                        <img src="./vyayama_dashboard_mockup_1769952825757.png" alt="Adaptive Dashboard">
+                    </div>
                 </div>
-                <div class="bento-item">
-                    <h3>Viral Hook</h3>
-                    <p>Shareable "AI Plan Summary" cards optimized for IG Stories.</p>
-                </div>
-                <div class="bento-item">
-                    <h3>LTV Scaling</h3>
-                    <p>Freemium model with AI Voice Coaching as the Tier 2 upgrade.</p>
+            </div>
+
+            <!-- FEATURE: THE AI COACH -->
+            <div class="feature-block">
+                <div class="feature-grid" style="direction: rtl;">
+                    <div class="feature-content" style="direction: ltr;">
+                        <span class="tag">FEATURE 02</span>
+                        <h2>MULTI-MODAL<br>COACHING</h2>
+                        <p>A friction-killing interface. The user can ask questions or upload photos of equipment they
+                            don't recognize. The AI interprets the gym floor in real-time.</p>
+                        <div class="rationale">
+                            <h4>UX RATIONALE: THE MAGIC MOMENT</h4>
+                            <p>The "Photo-to-Reroute" feature addresses the 42% equipment friction statistic. It turns a
+                                potential "abandonment point" into a "success point" through instant AI-driven
+                                adaptation.</p>
+                        </div>
+                    </div>
+                    <div class="feature-visual">
+                        <img src="./vyayama_chat_mockup_1769952842616.png" alt="AI Coach">
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- ROADMAP -->
+        <!-- STRATEGY: JOURNEY MAP -->
         <section class="container">
-            <span class="tag">05 / FUTURE ROADMAP</span>
-            <p class="section-desc">Building the "Health Operating System."</p>
-            <div class="grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px;">
-                <div class="bento-item">
-                    <h3>V2: Wearable Sync</h3>
-                    <p>Real-time HR data to adjust rest periods automatically.</p>
+            <div class="section-header">
+                <span class="tag">06 / STRATEGY</span>
+                <h2 class="section-title">JOURNEY TO FLOW</h2>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <tr>
+                        <th>PHASE</th>
+                        <th>USER ATTITUDE</th>
+                        <th>LEGACY APPS</th>
+                        <th><strong>VYAYAMA</strong></th>
+                    </tr>
+                    <tr>
+                        <td><strong>ENTRY</strong></td>
+                        <td>"Am I doing this right?"</td>
+                        <td>Generic templates.</td>
+                        <td><strong>AI-Personalized Loadout</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>SESSION</strong></td>
+                        <td>"The rack is taken."</td>
+                        <td>Session abandonment.</td>
+                        <td><strong>JIT Equipment Rerouting</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>RECOVERY</strong></td>
+                        <td>"I'm too sore for tomorrow."</td>
+                        <td>Rigid schedule.</td>
+                        <td><strong>Adaptive Fatigue Adjustment</strong></td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- OUTCOME -->
+        <section class="container" style="background: #111; border-radius: var(--radius);">
+            <div class="feature-grid" style="padding: 100px;">
+                <div>
+                    <span class="tag">07 / IMPACT</span>
+                    <h2 style="font-size: 5rem; margin-bottom: 30px;">THE ROI</h2>
+                    <p>By implementing adaptive logic, we projected a <strong>40% reduction in Month-3 churn</strong>.
+                        The switch from a "Static Tool" to a "Dynamic Partner" created a defensible moat against legacy
+                        competitors like MyFitnessPal.</p>
                 </div>
-                <div class="bento-item">
-                    <h3>V3: Dietary Layer</h3>
-                    <p>Generative meal plans that sync with calorie burn data.</p>
-                </div>
-                <div class="bento-item">
-                    <h3>V4: Social Clubs</h3>
-                    <p>Hyper-local AI-matched gym buddy system.</p>
+                <div>
+                    <span class="tag">NORTH STAR</span>
+                    <h2 style="font-size: 5rem; color: var(--secondary);">88%</h2>
+                    <p>Target Weekly Plan Completion Rate</p>
                 </div>
             </div>
         </section>
@@ -476,11 +547,11 @@
             });
         }, { threshold: 0.1 });
 
-        document.querySelectorAll('section').forEach(section => {
-            section.style.opacity = '0';
-            section.style.transform = 'translateY(40px)';
-            section.style.transition = '1s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            observer.observe(section);
+        document.querySelectorAll('section, .feature-block').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(60px)';
+            el.style.transition = '1.2s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            observer.observe(el);
         });
     </script>
 </body>
