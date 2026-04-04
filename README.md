@@ -38,59 +38,82 @@ The project is built as a **Monorepo** containing three distinct services:
 
 ## 🛠️ Getting Started
 
-To run the full application, you need to start all three services in separate terminals.
+Follow these steps to set up and run the full **Vyayama** ecosystem on your local machine.
 
-### Prerequisites
-- Node.js (v18+)
-- Python (v3.10+)
-- Expo Go App (on mobile) or Android/iOS Emulator
+### 📋 Prerequisites
+Ensure you have the following installed:
+- **Node.js** (v18 or higher)
+- **Python** (v3.10 or higher)
+- **Git**
+- **Expo Go** app (on your iOS/Android mobile device)
 
-### 1. Start the AI Service (Python)
-This service handles workout generation and the chat bot.
+---
+
+### 1️⃣ AI Service (Python/FastAPI)
+The core AI engine that generates workout plans and handles the smart coach logic.
 
 ```bash
 cd ai-service
-# Create virtual environment (first time only)
+
+# 1. Create and activate virtual environment
 python3 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Install dependencies
+# 2. Install dependencies
 pip install -r requirements.txt
 
-# Create .env file with your API Key
-echo "GEMINI_API_KEY=your_google_api_key" > .env
+# 3. Configure environment variables
+# Create a .env file and add your Google Gemini API Key
+echo "GEMINI_API_KEY=your_google_api_key_here" > .env
 
-# Run the server
+# 4. Start the AI server
 python main.py
 ```
-*Runs on: `http://localhost:8000`*
+*   **Default Port**: `8000`
+*   **Endpoint**: `http://localhost:8000`
 
-### 2. Start the Backend (Node.js)
-This serves the API and manages users validation.
+---
+
+### 2️⃣ Backend API (Node.js/Express)
+The central API that handles user authentication, data persistence, and exercise metadata.
 
 ```bash
 cd backend
-# Install dependencies
+
+# 1. Install dependencies
 npm install
 
-# Run the server
-npm start
-```
-*Runs on: `http://localhost:5001`*
+# 2. Configure environment variables
+# Create a .env file with the following:
+# PORT=5001
+# JWT_SECRET=your_secret_key_here
+# MONGODB_URI=mongodb://localhost:27017/gym-app (Optional, uses In-Memory by default)
 
-### 3. Start the Frontend (Expo)
-The mobile application interface.
+# 3. Start the server
+npm run dev
+```
+*   **Default Port**: `5001`
+*   **Database**: Uses `mongodb-memory-server` by default (no local MongoDB installation required for dev).
+
+---
+
+### 3️⃣ Mobile Application (React Native/Expo)
+The front-end user interface designed for a premium mobile experience.
 
 ```bash
 cd app
-# Install dependencies
+
+# 1. Install dependencies
 npm install
 
-# Start Expo
+# 2. Start Expo
 npx expo start -c
 ```
-*Runs on: `http://localhost:8081`*
-*Scan the QR code with your Expo Go app.*
+*   **Running on Device**: Scan the QR code with **Expo Go** (Android) or the **Camera App** (iOS).
+*   **Note**: Ensure your mobile device and computer are on the **same Wi-Fi network**.
+*   **Connecting to Backend**: The app defaults to `localhost` for simulators. To use a physical device, update the `API_URL` in `app/config.js` to your computer's local IP address.
+
+---
 
 ---
 
