@@ -13,8 +13,9 @@ from agno.db.sqlite import SqliteDb
 load_dotenv()
 
 # Ensure GOOGLE_API_KEY is set for Agno
-if not os.environ.get("GOOGLE_API_KEY"):
-    os.environ["GOOGLE_API_KEY"] = os.environ.get("GEMINI_API_KEY")
+gemini_key = os.environ.get("GEMINI_API_KEY")
+if gemini_key and not os.environ.get("GOOGLE_API_KEY"):
+    os.environ["GOOGLE_API_KEY"] = gemini_key
 
 app = FastAPI()
 

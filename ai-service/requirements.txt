@@ -5,3 +5,5 @@ numpy
 pandas
 agno
 google-genai
+sqlalchemy
+aiosqlite

@@ -5,6 +5,7 @@ __pycache__/
 .DS_Store
 agent_storage.db
 *.log
+.claude/settings.local.json
 
 # graphify local-only cache/config (not meaningful output, regenerated on --update)
 graphify-out/cache/
