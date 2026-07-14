@@ -11,7 +11,7 @@ const Tag = memo(({
         switch (variant) {
             case 'secondary':
                 return {
-                    backgroundColor: 'rgba(198, 255, 0, 0.1)',
+                    backgroundColor: 'rgba(77, 0, 140, 0.1)',
                     color: COLORS.secondary,
                 };
             case 'success':
@@ -32,7 +32,7 @@ const Tag = memo(({
             case 'primary':
             default:
                 return {
-                    backgroundColor: 'rgba(46, 106, 255, 0.2)',
+                    backgroundColor: 'rgba(0, 240, 255, 0.2)',
                     color: COLORS.primary,
                 };
         }

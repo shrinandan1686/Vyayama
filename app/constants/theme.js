@@ -1,23 +1,23 @@
 
 export const COLORS = {
-    // Base Colors
-    primary: '#2E6AFF', // Electric Blue
-    primaryGradientStart: '#2E6AFF',
-    primaryGradientEnd: '#0442D1',
+    // Base Colors - Vyayama Premium Design System (Vibrant Neon Blue / Deep Purple / Pitch Black)
+    primary: '#00F0FF', // Vibrant Neon Blue
+    primaryGradientStart: '#4D008C', // Deep Purple
+    primaryGradientEnd: '#00F0FF', // Vibrant Neon Blue
 
-    secondary: '#C6FF00', // Neon Lime (Accent)
+    secondary: '#4D008C', // Deep Purple (Accent)
 
     // Backgrounds
-    background: '#121212', // Deep Dark - Main app background
-    surface: '#1E1E1E', // Slightly Lighter Dark for Cards
-    surfaceLight: '#2C2C2C', // Even Lighter for inputs/elements
-    modalBackground: '#1C1C1E', // Modal/overlay backgrounds
-    cardBackground: '#262626', // Card backgrounds
+    background: '#050508', // Pitch Black - Main app background
+    surface: '#121218', // Slightly Lighter Dark for Cards
+    surfaceLight: '#1E1E28', // Even Lighter for inputs/elements
+    modalBackground: '#101014', // Modal/overlay backgrounds
+    cardBackground: '#16161E', // Card backgrounds
 
     // Text
     text: '#FFFFFF',
-    textSecondary: '#AAAAAA',
-    textMuted: '#666666',
+    textSecondary: '#A9A9B8',
+    textMuted: '#65656F',
 
     // Status
     success: '#00E676',
@@ -25,7 +25,7 @@ export const COLORS = {
     warning: '#FFAB40',
 
     // Borders & Overlays
-    border: '#333333',
+    border: '#2A2A36',
     borderLight: 'rgba(255, 255, 255, 0.1)',
     borderDark: 'rgba(255, 255, 255, 0.05)',
     borderFocus: 'rgba(255, 255, 255, 0.08)',
@@ -76,17 +76,24 @@ export const SIZES = {
     height: '100%',
 };
 
+// Syne is a display face - reserved for large hero moments (largeTitle/h1/h2)
+// only, so it never competes with itself at small sizes. Everything else,
+// including mid-size headers (h3/h4), uses Inter's bolder weights - this is
+// what keeps the type hierarchy feeling deliberate rather than "loud
+// everywhere." Fonts are loaded via useFonts in App.js - these family names
+// must match the keys passed there.
 export const FONTS = {
-    largeTitle: { fontSize: SIZES.largeTitle, fontWeight: '800', color: COLORS.text },
-    h1: { fontSize: SIZES.h1, fontWeight: '700', color: COLORS.text },
-    h2: { fontSize: SIZES.h2, fontWeight: '700', color: COLORS.text },
-    h3: { fontSize: SIZES.h3, fontWeight: '600', color: COLORS.text },
-    h4: { fontSize: SIZES.h4, fontWeight: '600', color: COLORS.text },
-    body1: { fontSize: SIZES.body1, fontWeight: '400', color: COLORS.text },
-    body2: { fontSize: SIZES.body2, fontWeight: '400', color: COLORS.text },
-    body3: { fontSize: SIZES.body3, fontWeight: '400', color: COLORS.text },
-    body4: { fontSize: SIZES.body4, fontWeight: '400', color: COLORS.text },
-    button: { fontSize: SIZES.body3, fontWeight: '600', color: COLORS.white },
+    largeTitle: { fontSize: SIZES.largeTitle, fontFamily: 'Syne_800ExtraBold', color: COLORS.text },
+    h1: { fontSize: SIZES.h1, fontFamily: 'Syne_800ExtraBold', color: COLORS.text },
+    h2: { fontSize: SIZES.h2, fontFamily: 'Syne_800ExtraBold', color: COLORS.text },
+    h3: { fontSize: SIZES.h3, fontFamily: 'Inter_700Bold', color: COLORS.text },
+    h4: { fontSize: SIZES.h4, fontFamily: 'Inter_700Bold', color: COLORS.text },
+    body1: { fontSize: SIZES.body1, fontFamily: 'Inter_400Regular', color: COLORS.text },
+    body2: { fontSize: SIZES.body2, fontFamily: 'Inter_400Regular', color: COLORS.text },
+    body3: { fontSize: SIZES.body3, fontFamily: 'Inter_400Regular', color: COLORS.text },
+    body4: { fontSize: SIZES.body4, fontFamily: 'Inter_400Regular', color: COLORS.text },
+    body5: { fontSize: SIZES.small, fontFamily: 'Inter_400Regular', color: COLORS.textSecondary },
+    button: { fontSize: SIZES.body3, fontFamily: 'Inter_600SemiBold', color: COLORS.white },
 };
 
 const appTheme = { COLORS, SIZES, FONTS };

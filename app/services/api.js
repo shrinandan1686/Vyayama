@@ -174,6 +174,42 @@ class ApiService {
         const { data } = await this.api.post('/workout-plans/next-day');
         return data;
     }
+
+    // ============ WORKOUT SESSION ENDPOINTS ============
+
+    async getTodaysWorkoutSchedule() {
+        const { data } = await this.api.get('/workout-sessions/today');
+        return data;
+    }
+
+    async startWorkoutSession(workoutType) {
+        const { data } = await this.api.post('/workout-sessions', { workoutType });
+        return data;
+    }
+
+    async updateWorkoutSet(sessionId, exerciseIndex, setIndex, setData) {
+        const { data } = await this.api.put(`/workout-sessions/${sessionId}/set`, {
+            exerciseIndex,
+            setIndex,
+            ...setData
+        });
+        return data;
+    }
+
+    async completeWorkoutSession(sessionId, durationSeconds) {
+        const { data } = await this.api.put(`/workout-sessions/${sessionId}/complete`, { durationSeconds });
+        return data;
+    }
+
+    async getWorkoutSessionHistory() {
+        const { data } = await this.api.get('/workout-sessions/history');
+        return data;
+    }
+
+    async getWorkoutSession(sessionId) {
+        const { data } = await this.api.get(`/workout-sessions/${sessionId}`);
+        return data;
+    }
 }
 
 // Export singleton instance

@@ -5,6 +5,10 @@ jest.mock('react-native', () => {
     return RN;
 });
 
+jest.mock('@react-native-async-storage/async-storage', () =>
+    require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
 // Mocking some other common native modules that might cause "out of scope" errors
 jest.mock('expo-linear-gradient', () => {
     const React = require('react');

@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS, SIZES } from '../constants/theme';
 import AppButton from '../components/AppButton';
 import AppInput from '../components/AppInput';
+import GlassCard from '../components/GlassCard';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import API_URL from '../config';
@@ -125,7 +126,7 @@ const OnboardingWizard = ({ navigation }) => {
             {STEPS.map((step, index) => (
                 <View key={step.id} style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                     <View style={[styles.stepDot, currentStep >= step.id && styles.stepDotActive]}>
-                        <Text style={styles.stepNum}>{step.id}</Text>
+                        <Text style={[styles.stepNum, currentStep >= step.id && styles.stepNumActive]}>{step.id}</Text>
                     </View>
                     {index < STEPS.length - 1 && (
                         <View style={[styles.stepLine, currentStep > step.id && styles.stepLineActive]} />
@@ -140,11 +141,13 @@ const OnboardingWizard = ({ navigation }) => {
             <Text style={styles.stepTitle}>Physical Details</Text>
             <Text style={styles.stepSub}>Let's calibrate your baseline.</Text>
 
-            <View style={styles.inputGroup}>
-                <AppInput label="Age" value={formData.age} onChangeText={t => updateForm('age', t)} keyboardType="numeric" placeholder="e.g. 25" />
-                <AppInput label="Weight (kg)" value={formData.weight} onChangeText={t => updateForm('weight', t)} keyboardType="numeric" placeholder="e.g. 70" />
-                <AppInput label="Height (cm)" value={formData.height} onChangeText={t => updateForm('height', t)} keyboardType="numeric" placeholder="e.g. 175" />
-            </View>
+            <GlassCard style={styles.inputCard}>
+                <View style={styles.inputGroup}>
+                    <AppInput label="Age" value={formData.age} onChangeText={t => updateForm('age', t)} keyboardType="numeric" placeholder="e.g. 25" />
+                    <AppInput label="Weight (kg)" value={formData.weight} onChangeText={t => updateForm('weight', t)} keyboardType="numeric" placeholder="e.g. 70" />
+                    <AppInput label="Height (cm)" value={formData.height} onChangeText={t => updateForm('height', t)} keyboardType="numeric" placeholder="e.g. 175" />
+                </View>
+            </GlassCard>
 
             <Text style={styles.label}>Gender</Text>
             <View style={styles.rowWrap}>
@@ -320,11 +323,19 @@ const styles = StyleSheet.create({
     },
     stepDotActive: {
         backgroundColor: COLORS.primary,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 8,
+        elevation: 4,
     },
     stepNum: {
         ...FONTS.body4,
         color: COLORS.white,
         fontWeight: 'bold',
+    },
+    stepNumActive: {
+        color: COLORS.black,
     },
     stepLine: {
         flex: 1,
@@ -349,6 +360,12 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
         marginBottom: 30,
     },
+    inputCard: {
+        marginBottom: SIZES.marginSection,
+    },
+    inputGroup: {
+        padding: SIZES.padding,
+    },
     label: {
         ...FONTS.h4,
         color: COLORS.text,
@@ -369,7 +386,7 @@ const styles = StyleSheet.create({
         borderColor: COLORS.surfaceLight,
     },
     optionChipSelected: {
-        backgroundColor: 'rgba(46, 106, 255, 0.2)',
+        backgroundColor: 'rgba(0, 240, 255, 0.2)',
         borderColor: COLORS.primary,
     },
     optionText: {
@@ -392,7 +409,7 @@ const styles = StyleSheet.create({
     },
     radioOptionSelected: {
         borderColor: COLORS.primary,
-        backgroundColor: 'rgba(46, 106, 255, 0.1)',
+        backgroundColor: 'rgba(0, 240, 255, 0.1)',
     },
     radioText: {
         marginLeft: 10,

@@ -1,13 +1,15 @@
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_URL from '../config';
-// import AsyncStorage from '@react-native-async-storage/async-storage'; // Need to install if persisting
+
+const TOKEN_STORAGE_KEY = 'userToken';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [userToken, setUserToken] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [userInfo, setUserInfo] = useState(null);
     const [hasOnboarded, setHasOnboarded] = useState(false);
 
@@ -19,7 +21,7 @@ export const AuthProvider = ({ children }) => {
                 password
             });
             setUserToken(response.data.token);
-            // AsyncStorage.setItem('userToken', response.data.token);
+            await AsyncStorage.setItem(TOKEN_STORAGE_KEY, response.data.token);
             await checkOnboardingStatus(response.data.token);
         } catch (e) {
             console.log(e);
@@ -37,7 +39,7 @@ export const AuthProvider = ({ children }) => {
                 password
             });
             setUserToken(response.data.token);
-            // AsyncStorage.setItem('userToken', response.data.token);
+            await AsyncStorage.setItem(TOKEN_STORAGE_KEY, response.data.token);
             await checkOnboardingStatus(response.data.token);
         } catch (e) {
             console.log(e);
@@ -46,12 +48,12 @@ export const AuthProvider = ({ children }) => {
         setIsLoading(false);
     };
 
-    const logout = () => {
+    const logout = async () => {
         setIsLoading(true);
         setUserToken(null);
         setHasOnboarded(false);
         setUserInfo(null);
-        // AsyncStorage.removeItem('userToken');
+        await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
         setIsLoading(false);
     };
 
@@ -80,6 +82,24 @@ export const AuthProvider = ({ children }) => {
             await checkOnboardingStatus(userToken);
         }
     };
+
+    // Restore a persisted session when the app starts or reloads
+    useEffect(() => {
+        const bootstrapAuth = async () => {
+            try {
+                const storedToken = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+                if (storedToken) {
+                    setUserToken(storedToken);
+                    await checkOnboardingStatus(storedToken);
+                }
+            } catch (e) {
+                console.log('Error restoring session:', e);
+            }
+            setIsLoading(false);
+        };
+
+        bootstrapAuth();
+    }, []);
 
     return (
         <AuthContext.Provider value={{ login, register, logout, isLoading, userToken, hasOnboarded, userInfo, checkOnboardingStatus, refreshUserInfo }}>

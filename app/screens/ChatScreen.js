@@ -9,7 +9,6 @@ import {
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
-    SafeAreaView,
     Image,
     Keyboard,
     Animated,
@@ -18,6 +17,7 @@ import {
     Pressable,
     ScrollView
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SIZES, FONTS } from '../constants/theme';
 import { AuthContext } from '../context/AuthContext';
@@ -451,7 +451,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: SIZES.paddingSmall,
-        paddingTop: Platform.OS === 'android' ? SIZES.marginSmall : 0,
+        paddingTop: SIZES.marginSmall,
         paddingBottom: SIZES.paddingSmall,
         borderBottomWidth: 1,
         borderBottomColor: COLORS.borderFocus,
@@ -504,13 +504,13 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: 'rgba(46, 106, 255, 0.1)',
+        backgroundColor: 'rgba(0, 240, 255, 0.1)',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: SIZES.marginSmall,
         marginTop: 2,
         borderWidth: 1,
-        borderColor: 'rgba(46, 106, 255, 0.2)',
+        borderColor: 'rgba(0, 240, 255, 0.2)',
     },
     messageBubble: {
         borderRadius: 20,
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
         width: 24,
         height: 24,
         borderRadius: SIZES.radius,
-        backgroundColor: 'rgba(46, 106, 255, 0.1)',
+        backgroundColor: 'rgba(0, 240, 255, 0.1)',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: SIZES.marginSmall,
@@ -655,7 +655,7 @@ const styles = StyleSheet.create({
     activeSessionItem: {
         borderColor: COLORS.primary,
         borderWidth: 1,
-        backgroundColor: 'rgba(46, 106, 255, 0.1)',
+        backgroundColor: 'rgba(0, 240, 255, 0.1)',
     },
     sessionIcon: {
         width: 40,

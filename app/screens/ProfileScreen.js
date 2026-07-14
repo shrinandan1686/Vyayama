@@ -63,7 +63,7 @@ const ProfileScreen = ({ navigation }) => {
 
     const renderStatItem = (label, value) => (
         <View style={styles.statItem}>
-            <Text style={styles.statValue}>{value || '-'}</Text>
+            <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{value || '-'}</Text>
             <Text style={styles.statLabel}>{label}</Text>
         </View>
     );
@@ -76,7 +76,7 @@ const ProfileScreen = ({ navigation }) => {
                 showsVerticalScrollIndicator={false}
                 refreshControl={
                     <RefreshControl
-                        retreathing={refreshing}
+                        refreshing={refreshing}
                         onRefresh={handleRefresh}
                         tintColor={COLORS.primary}
                         colors={[COLORS.primary]}
@@ -206,9 +206,10 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     statValue: {
-        ...FONTS.h2,
+        ...FONTS.h3,
         color: COLORS.white,
         marginBottom: 5,
+        textAlign: 'center',
     },
     statLabel: {
         ...FONTS.body4,

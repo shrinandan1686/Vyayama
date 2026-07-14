@@ -1,25 +1,22 @@
 import React, { useContext, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 import { AuthContext } from '../context/AuthContext';
 import { useWorkoutPlan } from '../hooks/useWorkoutPlan';
-import { useActivity } from '../hooks/useActivity';
 import { useApi } from '../hooks/useApi';
 import ScreenWrapper from '../components/ScreenWrapper';
 import { COLORS, FONTS, SIZES } from '../constants/theme';
 import AppButton from '../components/AppButton';
-import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import GlassCard from '../components/GlassCard';
-import ChartComponent from '../components/ChartComponent';
 import { Ionicons } from '@expo/vector-icons';
 import Tag from '../components/Tag';
 import WorkoutPlanSkeleton from '../components/WorkoutPlanSkeleton';
+import TodaysWorkoutCard from '../components/TodaysWorkoutCard';
 
 const HomeScreen = ({ navigation }) => {
-    const { userToken, userInfo, refreshUserInfo } = useContext(AuthContext);
+    const { userInfo, refreshUserInfo } = useContext(AuthContext);
     const { plan, loading, refreshing, error, refetch } = useWorkoutPlan();
-    const { stats, weeklyData, loading: activityLoading, refetch: refetchActivity } = useActivity();
     const isFocused = useIsFocused();
     const [advancingDay, setAdvancingDay] = React.useState(false);
     const api = useApi();
@@ -28,9 +25,8 @@ const HomeScreen = ({ navigation }) => {
     useEffect(() => {
         if (isFocused) {
             refetch();
-            refetchActivity();
         }
-    }, [isFocused, refetch, refetchActivity]);
+    }, [isFocused, refetch]);
 
     if (loading) {
         return (
@@ -54,14 +50,8 @@ const HomeScreen = ({ navigation }) => {
 
     const renderHeader = () => (
         <View style={styles.header}>
-            <View>
-                <Text style={styles.greeting}>Hello, Athlete</Text>
-                <Text style={styles.subGreeting}>Ready to crush it today?</Text>
-            </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.profileButton}>
-                {/* Placeholder for Profile Tab in case we want direct access here too, but Tab is there */}
-                <Ionicons name="person-circle-outline" size={32} color={COLORS.primary} />
-            </TouchableOpacity>
+            <Text style={styles.greeting}>Hello, Athlete</Text>
+            <Text style={styles.subGreeting}>Ready to crush it today?</Text>
         </View>
     );
 
@@ -131,7 +121,6 @@ const HomeScreen = ({ navigation }) => {
                 // Refresh user info and workout plan
                 await refreshUserInfo();
                 await refetch();
-                await refetchActivity();
 
                 if (!nextDayExists) {
                     Alert.alert('Success!', `Advanced to Day ${nextDayNumber}! New workout generated.`);
@@ -147,7 +136,7 @@ const HomeScreen = ({ navigation }) => {
         return (
             <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>TODAY'S WORKOUT</Text>
+                    <Text style={styles.sectionTitle}>30-DAY AI PLAN</Text>
                     <TouchableOpacity onPress={() => Alert.alert('Full Plan', 'Interactive 30-Day calendar coming soon!')}>
                         <Text style={styles.seeAll}>See Plan</Text>
                     </TouchableOpacity>
@@ -182,7 +171,7 @@ const HomeScreen = ({ navigation }) => {
                             }}>
                                 <View style={[
                                     styles.optionIcon,
-                                    { backgroundColor: ex.completed ? 'rgba(46, 255, 106, 0.1)' : 'rgba(46, 106, 255, 0.1)' }
+                                    { backgroundColor: ex.completed ? 'rgba(46, 255, 106, 0.1)' : 'rgba(0, 240, 255, 0.1)' }
                                 ]}>
                                     <Ionicons
                                         name={ex.completed ? "checkmark-circle" : "fitness-outline"}
@@ -280,55 +269,9 @@ const HomeScreen = ({ navigation }) => {
                 }
             >
 
-                {/* Weekly Activity Chart */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>WEEKLY ACTIVITY</Text>
-                    <GlassCard>
-                        <View style={{ padding: 20 }}>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
-                                <View>
-                                    <Text style={styles.statBig}>{stats.totalCalories?.toLocaleString() || 0}</Text>
-                                    <Text style={styles.statLabel}>Kcal Burned</Text>
-                                </View>
-                                <View>
-                                    <Text style={styles.statBig}>{stats.totalWorkouts || 0}</Text>
-                                    <Text style={styles.statLabel}>Workouts</Text>
-                                </View>
-                            </View>
-                            <ChartComponent data={weeklyData} />
-                        </View>
-                    </GlassCard>
-                </View>
+                <TodaysWorkoutCard navigation={navigation} />
 
                 {!plan ? renderNoPlanState() : renderTodayWorkout()}
-
-                {/* Status/Challenge Card */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>CHALLENGE</Text>
-                    <GlassCard>
-                        <LinearGradient colors={[COLORS.surface, '#2E2E2E']} style={{ padding: 20 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <View style={styles.challengeIcon}>
-                                    <Text style={{ fontSize: 24 }}>🔥</Text>
-                                </View>
-                                <View style={{ marginLeft: 15, flex: 1 }}>
-                                    <Text style={styles.challengeTitle}>30-Day Streak</Text>
-                                    <Text style={styles.challengeSub}>
-                                        {stats.currentStreak > 0
-                                            ? `You are on day ${stats.currentStreak}. Keep it up!`
-                                            : 'Start your streak today!'}
-                                    </Text>
-                                </View>
-                            </View>
-                            <View style={styles.progressBarBg}>
-                                <LinearGradient
-                                    colors={[COLORS.secondary, COLORS.primary]}
-                                    style={{ width: `${Math.min((stats.currentStreak / 30) * 100, 100)}%`, height: '100%' }}
-                                />
-                            </View>
-                        </LinearGradient>
-                    </GlassCard>
-                </View>
 
             </ScrollView>
         </ScreenWrapper>
@@ -337,25 +280,17 @@ const HomeScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
     header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
         paddingBottom: 20,
         paddingTop: 10,
     },
     greeting: {
-        ...FONTS.h2,
+        ...FONTS.h1,
         color: COLORS.white,
     },
     subGreeting: {
         ...FONTS.body4,
         color: COLORS.textSecondary,
-    },
-    profileButton: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
+        marginTop: 2,
     },
     scrollContent: {
         paddingBottom: 100, // Extra space for Bottom Tab integration
@@ -437,38 +372,6 @@ const styles = StyleSheet.create({
         fontSize: SIZES.caption,
         color: COLORS.textSecondary,
     },
-    statBig: {
-        ...FONTS.h2,
-        color: COLORS.white,
-    },
-    statLabel: {
-        fontSize: SIZES.caption,
-        color: COLORS.textSecondary,
-    },
-    challengeIcon: {
-        width: 50,
-        height: 50,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: 25,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    challengeTitle: {
-        ...FONTS.h3,
-        color: COLORS.white,
-    },
-    challengeSub: {
-        fontSize: SIZES.caption,
-        color: COLORS.textSecondary,
-    },
-    progressBarBg: {
-        height: 6,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderRadius: 3,
-        marginTop: 15,
-        overflow: 'hidden',
-    },
 });
 
 export default HomeScreen;
-

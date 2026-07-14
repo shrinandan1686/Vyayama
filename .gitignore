@@ -5,3 +5,8 @@ __pycache__/
 .DS_Store
 agent_storage.db
 *.log
+
+# graphify local-only cache/config (not meaningful output, regenerated on --update)
+graphify-out/cache/
+graphify-out/.obsidian/
+graphify-out/.graphify_python

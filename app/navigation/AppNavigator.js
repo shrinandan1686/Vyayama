@@ -12,6 +12,8 @@ import TabsNavigator from './TabsNavigator';
 import OnboardingWizard from '../screens/OnboardingWizard';
 import ExerciseDetailScreen from '../screens/ExerciseDetailScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import WorkoutSessionScreen from '../screens/WorkoutSessionScreen';
+import WorkoutCompleteScreen from '../screens/WorkoutCompleteScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -40,6 +42,8 @@ const AppNavigator = () => {
                         <Stack.Screen name="MainTabs" component={TabsNavigator} options={{ headerShown: false }} />
                         <Stack.Screen name="ExerciseDetail" component={ExerciseDetailScreen} options={{ headerShown: false }} />
                         <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
+                        <Stack.Screen name="WorkoutSession" component={WorkoutSessionScreen} options={{ headerShown: false }} />
+                        <Stack.Screen name="WorkoutComplete" component={WorkoutCompleteScreen} options={{ headerShown: false }} />
                     </>
                 ) : (
                     <>
@@ -47,6 +51,8 @@ const AppNavigator = () => {
                         <Stack.Screen name="Onboarding" component={OnboardingWizard} options={{ headerShown: false }} />
                         <Stack.Screen name="ExerciseDetail" component={ExerciseDetailScreen} options={{ headerShown: false }} />
                         <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
+                        <Stack.Screen name="WorkoutSession" component={WorkoutSessionScreen} options={{ headerShown: false }} />
+                        <Stack.Screen name="WorkoutComplete" component={WorkoutCompleteScreen} options={{ headerShown: false }} />
                     </>
                 )}
             </Stack.Navigator>

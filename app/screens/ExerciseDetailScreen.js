@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     tag: {
-        backgroundColor: 'rgba(46, 106, 255, 0.2)',
+        backgroundColor: 'rgba(0, 240, 255, 0.2)',
         paddingHorizontal: SIZES.paddingMini,
         paddingVertical: 5,
         borderRadius: 20,
