@@ -2,7 +2,7 @@
 
 ## Reporting Security Vulnerabilities
 
-If you discover a security vulnerability in Vyayama, please email [your-email@example.com] with:
+If you discover a security vulnerability in Vyayama, please email **acharaya.srinandan@gmail.com** with:
 - Description of the vulnerability
 - Steps to reproduce (if applicable)
 - Potential impact
@@ -36,6 +36,7 @@ Please do **not** open a public GitHub issue for security vulnerabilities.
 ### Authentication
 - Passwords are hashed using bcryptjs with salt
 - JWT tokens expire after 100 hours (360000 seconds)
+- `JWT_SECRET` is required to be set via environment variables (no hardcoded defaults)
 - Change `JWT_SECRET` regularly and rotate tokens accordingly
 
 ### Frontend Security
@@ -49,7 +50,7 @@ Please do **not** open a public GitHub issue for security vulnerabilities.
 
 Before deploying to production:
 
-- [ ] Set all required environment variables
+- [ ] Set all required environment variables securely
 - [ ] Use strong, unique secrets
 - [ ] Enable HTTPS/SSL for all API communications
 - [ ] Configure CORS properly (restrict to your domain)
