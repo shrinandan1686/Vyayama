@@ -1,6 +1,6 @@
 # Vyayama (AI Gym App)
 
-**Vyayama** is a next-generation fitness application powered by AI. It provides personalized 30-day workout plans, tracks your progress, and features an intelligent **AI Coach** that remembers your conversation context to guide you on your fitness journey.
+**Vyayama** is a next-generation fitness application powered by AI. It provides personalized 30-day workout plans, tracks your progress, and features an intelligent **AI Coach** that remembers your preferences and fitness journey.
 
 ![App Screenshot](./app/assets/icon.png)
 
@@ -10,7 +10,7 @@
 - **AI Health Coach**: Chat with a smart assistant that remembers your history (powered by Google Gemini & Agno).
 - **Interactive Workouts**: Track exercises, sets, and reps with a beautiful UI.
 - **Progress Tracking**: Visualize your calorie burn and workout frequency.
-- **Secure Authentication**: User registration and login.
+- **Secure Authentication**: User registration and login with JWT tokens.
 
 ## 🏗️ Tech Stack
 
@@ -47,6 +47,20 @@ Ensure you have the following installed:
 - **Git**
 - **Expo Go** app (on your iOS/Android mobile device)
 
+### 🔐 Environment Setup
+
+Each service requires environment variables. Copy the `.env.example` files to `.env` and fill in your actual values:
+
+```bash
+# In backend directory
+cp .env.example .env
+
+# In ai-service directory
+cp .env.example .env
+```
+
+See [Environment Variables Guide](#-environment-variables-guide) below for details.
+
 ---
 
 ### 1️⃣ AI Service (Python/FastAPI)
@@ -63,8 +77,9 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # 3. Configure environment variables
-# Create a .env file and add your Google Gemini API Key
-echo "GEMINI_API_KEY=your_google_api_key_here" > .env
+# Copy .env.example to .env and add your Google Gemini API Key
+cp .env.example .env
+# Edit .env and set GEMINI_API_KEY
 
 # 4. Start the AI server
 python main.py
@@ -84,10 +99,9 @@ cd backend
 npm install
 
 # 2. Configure environment variables
-# Create a .env file with the following:
-# PORT=5001
-# JWT_SECRET=your_secret_key_here
-# MONGODB_URI=mongodb://localhost:27017/gym-app (Optional, uses In-Memory by default)
+# Copy .env.example to .env and set your values
+cp .env.example .env
+# Required: JWT_SECRET, Optional: MONGODB_URI, PORT
 
 # 3. Start the server
 npm run dev
@@ -111,9 +125,46 @@ npx expo start -c
 ```
 *   **Running on Device**: Scan the QR code with **Expo Go** (Android) or the **Camera App** (iOS).
 *   **Note**: Ensure your mobile device and computer are on the **same Wi-Fi network**.
-*   **Connecting to Backend**: The app defaults to `localhost` for simulators. To use a physical device, update the `API_URL` in `app/config.js` to your computer's local IP address.
+*   **Connecting to Backend**: The app defaults to `localhost` for simulators. 
+  - To use a physical device, set the `REACT_NATIVE_API_URL` environment variable:
+    ```bash
+    REACT_NATIVE_API_URL=http://YOUR_MACHINE_IP:5001/api npx expo start
+    ```
+    Replace `YOUR_MACHINE_IP` with your machine's local IP (run `ipconfig getifaddr en0` on macOS).
 
 ---
+
+## 📋 Environment Variables Guide
+
+### Backend (`.env.example`)
+```env
+# Required
+JWT_SECRET=your-super-secret-jwt-key-here-change-in-production
+
+# Optional (defaults shown)
+PORT=5001
+NODE_ENV=development
+MONGODB_URI=mongodb://localhost:27017/vyayama
+```
+
+**Generating a strong JWT_SECRET:**
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### AI Service (`.env.example`)
+```env
+# Required
+GEMINI_API_KEY=your-google-gemini-api-key-here
+
+# Optional
+USE_MOCK_AI=false  # Set to true to run without API calls (demo mode)
+```
+
+**Getting a Gemini API Key:**
+1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Click "Create API Key"
+3. Copy the key and paste it in your `.env` file
 
 ---
 
@@ -124,13 +175,35 @@ The AI Chat uses **Agno** agents with a persistent **SQLite database**.
 - The conversation history is stored in `ai-service/agent_storage.db`.
 - This ensures the AI remembers user preferences and context across app restarts.
 
+---
+
+## 🔒 Security
+
+This project takes security seriously. Please review our [Security Policy](./SECURITY.md) for:
+- How to report security vulnerabilities
+- Environment variable best practices
+- Deployment security checklist
+- Dependency security updates
+
+---
+
 ## 🤝 Contributing
+
+Contributions are welcome! Here's how to get started:
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+Please ensure your code follows the project's coding standards and includes appropriate tests.
+
+---
+
+## 📄 License
+
+[Add your license here - e.g., MIT, Apache 2.0, etc.]
 
 ---
 
