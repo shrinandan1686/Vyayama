@@ -6,8 +6,9 @@ import { Platform } from 'react-native';
 // For a physical Android device on the same Wi-Fi, use your machine's LAN IP
 // (run `ipconfig getifaddr en0` on macOS) - update it here if your network changes.
 
-const API_URL = Platform.OS === 'android'
-    ? 'http://192.168.1.5:5001/api'
-    : 'http://localhost:5001/api';
+// Physical devices (Expo Go) need the machine's LAN IP, not localhost.
+// Override per-run with EXPO_PUBLIC_API_URL=http://<ip>:5001/api npx expo start
+const API_URL = process.env.EXPO_PUBLIC_API_URL
+    || (Platform.OS === 'web' ? 'http://localhost:5001/api' : 'http://192.168.31.158:5001/api');
 
 export default API_URL;
